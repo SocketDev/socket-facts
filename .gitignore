@@ -207,6 +207,18 @@ pnpm-debug.log
 /emitters/dotnet-tool/obj/
 /emitters/dotnet-tool/publish/
 
+# JVM build-tool + IDE residue. The conformance fixtures under test/ run a REAL
+# Maven/Gradle invocation inside the fixture dir, so the tool writes its own
+# caches next to the tracked build file; the VS Code Java/Gradle extensions then
+# drop Eclipse project metadata beside them. Unanchored so a new fixture or
+# emitter is covered without another entry.
+**/.gradle/
+**/target/
+**/.settings/
+.classpath
+.factorypath
+.project
+
 # <fleet-pack>
 # Fleet-pack untrack set — managed by scripts/repo/bootstrap/fleet.mjs.
 # REGENERATED from the release-bundle manifest on every hydrate; stale
