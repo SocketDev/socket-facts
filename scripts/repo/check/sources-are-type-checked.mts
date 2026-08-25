@@ -32,6 +32,11 @@ import { REPO_ROOT } from '../paths.mts'
 
 const logger = getDefaultLogger()
 
+// `.mts` only. The one `.ts` file under test/ is a fuzz target whose framework
+// is an optional devDependency, so including it would fail this gate on a
+// checkout that has not installed it — the same false-red the emitter-asset
+// skip exists to avoid. It is therefore NOT type-checked, and a stale call
+// inside it will not be caught here; that gap is real and known.
 export const CHECKED_GLOBS: readonly string[] = [
   'src/**/*.mts',
   'test/**/*.mts',
