@@ -1,0 +1,8 @@
+// Two subprojects, no external dependencies: the point of the fixture is which
+// PROJECTS reach the facts, not what they resolve. `legacy` is the one the
+// exclude-path case removes.
+allprojects {
+  apply plugin: 'java'
+  group = 'com.example'
+  version = '1.0.0'
+}

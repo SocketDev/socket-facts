@@ -153,8 +153,8 @@
 - 🚨 `src/contract/` is a wire format a second implementation parses with a
   `.strict()` schema, so an additive field is a coordinated release, never a
   local edit. [`contract`](docs/agents.md/repo/contract.md)
-- 🚨 The sidecar's `classifier` serializes as an explicit JSON `null`; the fleet's
-  `undefined`-over-`null` preference stops at the wire.
+- 🚨 The sidecar is keyed by absolute `.socket.facts.json` path: the key IS the
+  per-subproject reachability scope, and there is NO cross-reactor dedup.
   [`contract`](docs/agents.md/repo/contract.md)
 - 🚨 The conformance oracle diffs emitted facts against the BUILD's own report, never a golden file. [`ground-truth-oracle`](docs/agents.md/repo/ground-truth-oracle.md)
 - 🚨 Only `extra` is tolerated in that diff; `missing`, `version-mismatch`, and a missing edge never are. [`ground-truth-oracle`](docs/agents.md/repo/ground-truth-oracle.md)

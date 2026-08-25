@@ -43,8 +43,12 @@ export function buildArtifactPaths(
     }
     coords.add(coordKey)
     const pi = projectsByGav.get(gav(c.group, c.name, c.version ?? ''))
-    const sources = (pi?.sources ?? []).filter(fileExists)
-    const targets = [...new Set([...fn.targets, ...(pi?.targets ?? [])])]
+    const sources = (pi?.sources ?? []).filter(fileExists).toSorted()
+    // A coordinate that is BOTH a resolved node and a first-party project
+    // reports the project's own output roots, NOT its published jar: per
+    // subproject reachability reads the module being analysed, and adding the
+    // jar would show the analyser a second copy of the same classes.
+    const targets = [...new Set(pi ? pi.targets : fn.targets)]
       .filter(fileExists)
       .toSorted()
     if (sources.length) {

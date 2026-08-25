@@ -13,9 +13,22 @@ export const EMITTERS_DIR: string = path.join(PACKAGE_ROOT, 'emitters')
 
 export const GRADLE_INIT_SCRIPT_FILENAME = 'socket-facts.init.gradle'
 
+// Workspace enumeration is a second, cheaper emitter family: it reads the
+// already-populated module list and builds no dependency graph. Same jar, same
+// init-script mechanism, different task gate.
+export const GRADLE_WORKSPACES_INIT_SCRIPT_FILENAME =
+  'socket-workspaces.init.gradle'
+
 export const SBT_PLUGIN_FILENAME = 'SocketFactsPlugin.scala'
 
 export const SBT_PLUGIN_SOURCE_FILENAME = 'socket-facts.plugin.scala'
+
+// The filename each plugin source is written as inside the run's `plugins/`
+// dir; sbt loads by filename, so the two families must not collide.
+export const SBT_WORKSPACES_PLUGIN_FILENAME = 'SocketWorkspacesPlugin.scala'
+
+export const SBT_WORKSPACES_PLUGIN_SOURCE_FILENAME =
+  'socket-workspaces.plugin.scala'
 
 export const MAVEN_EXTENSION_JAR_FILENAME = 'socket-facts-maven-extension.jar'
 
@@ -97,10 +110,18 @@ export function gradleInitScriptPath(): string {
   return path.join(EMITTERS_DIR, GRADLE_INIT_SCRIPT_FILENAME)
 }
 
+export function gradleWorkspacesInitScriptPath(): string {
+  return path.join(EMITTERS_DIR, GRADLE_WORKSPACES_INIT_SCRIPT_FILENAME)
+}
+
 export function mavenExtensionJarPath(): string {
   return path.join(MAVEN_EXTENSION_DIR, MAVEN_EXTENSION_JAR_FILENAME)
 }
 
 export function sbtPluginSourcePath(): string {
   return path.join(EMITTERS_DIR, SBT_PLUGIN_SOURCE_FILENAME)
+}
+
+export function sbtWorkspacesPluginSourcePath(): string {
+  return path.join(EMITTERS_DIR, SBT_WORKSPACES_PLUGIN_SOURCE_FILENAME)
 }

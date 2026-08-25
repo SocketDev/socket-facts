@@ -14,14 +14,18 @@ const RECORDS = [
   'node\tr1\torg.example:lib:jar:2.0.0\torg.example\tlib\t2.0.0\tjar\t\t1',
 ].join('\n')
 
+function minimalMetadata(): Record<string, unknown> {
+  return {
+    format: 'socket-facts-sbom',
+    tool: 'gradle',
+    toolVersion: '8.14',
+  }
+}
+
 function minimalSbom(): Record<string, unknown> {
   return {
     components: [{ id: 'org.example:lib:2.0.0', name: 'lib', type: 'maven' }],
-    metadata: {
-      format: 'socket-facts-sbom',
-      tool: 'gradle',
-      toolVersion: '8.14',
-    },
+    metadata: minimalMetadata(),
   }
 }
 
@@ -38,7 +42,7 @@ describe('validateSocketFactsSbom', () => {
 
   it('rejects a metadata format other than socket-facts-sbom', () => {
     const sbom = minimalSbom()
-    sbom['metadata'] = { ...minimalSbom()['metadata'], format: 'cyclonedx' }
+    sbom['metadata'] = { ...minimalMetadata(), format: 'cyclonedx' }
     const result = validateSocketFactsSbom(sbom)
     expect(result.ok).toBe(false)
     expect(result.ok === false && result.violations[0]?.path).toBe(
@@ -48,7 +52,7 @@ describe('validateSocketFactsSbom', () => {
 
   it('rejects a tool outside gradle, maven, and sbt', () => {
     const sbom = minimalSbom()
-    sbom['metadata'] = { ...minimalSbom()['metadata'], tool: 'bazel' }
+    sbom['metadata'] = { ...minimalMetadata(), tool: 'bazel' }
     const result = validateSocketFactsSbom(sbom)
     expect(result.ok).toBe(false)
     expect(result.ok === false && result.violations[0]?.path).toBe(
