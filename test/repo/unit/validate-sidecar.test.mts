@@ -2,96 +2,184 @@ import { describe, expect, it } from 'vitest'
 
 import {
   assertResolvedPathsSidecar,
-  RESOLVED_COMPONENT_FIELDS,
+  SIDECAR_COMPONENT_FIELDS,
+  SIDECAR_PROJECT_FIELDS,
   validateResolvedPathsSidecar,
 } from '../../../src/contract/validate-sidecar.mts'
 
-import type { ResolvedComponent } from '../../../src/contract/sidecar.mts'
+const FACTS_FILE = '/repo/.socket.facts.json'
 
+// Every field the strict consumer lists, so the field-list tests below compare
+// against a complete entry rather than a partial one.
 function component(
-  overrides: Partial<ResolvedComponent> = {},
+  overrides: Record<string, unknown> = {},
 ): Record<string, unknown> {
   return {
-    classifier: null,
-    ecosystem: 'maven',
-    ext: 'jar',
-    group: 'org.example',
+    dependencies: ['org.example:other:jar:1.0.0'],
+    dev: false,
+    direct: true,
+    id: 'org.example:lib:jar:1.2.3',
     name: 'lib',
+    namespace: 'org.example',
+    qualifiers: { ext: 'jar' },
     sources: [],
     targets: ['/repo/lib.jar'],
+    type: 'maven',
     version: '1.2.3',
     ...overrides,
   }
 }
 
+function project(
+  overrides: Record<string, unknown> = {},
+): Record<string, unknown> {
+  return {
+    dependencies: ['org.example:lib:jar:1.2.3'],
+    name: 'app',
+    namespace: 'org.example',
+    qualifiers: {},
+    resolvedAs: [],
+    sources: ['/repo/app/src/main/java'],
+    subprojectDir: 'app',
+    targets: ['/repo/app/target/classes'],
+    type: 'maven',
+    version: '1.0.0',
+    ...overrides,
+  }
+}
+
+function sidecar(
+  overrides: Record<string, unknown> = {},
+): Record<string, unknown> {
+  return {
+    [FACTS_FILE]: {
+      components: [component()],
+      projects: [project()],
+      ...overrides,
+    },
+  }
+}
+
 describe('validateResolvedPathsSidecar', () => {
-  it('accepts a bare array of well-formed components', () => {
-    const result = validateResolvedPathsSidecar([component()])
-    expect(result.ok).toBe(true)
+  it('accepts a well-formed sidecar keyed by facts file', () => {
+    expect(validateResolvedPathsSidecar(sidecar()).ok).toBe(true)
   })
 
   it('accepts the empty sidecar', () => {
-    expect(validateResolvedPathsSidecar([]).ok).toBe(true)
+    expect(validateResolvedPathsSidecar({}).ok).toBe(true)
   })
 
-  it('rejects an envelope object around the array', () => {
-    const result = validateResolvedPathsSidecar({
-      components: [component()],
-    })
-    expect(result.ok).toBe(false)
-    expect(result.ok === false && result.violations[0]?.path).toBe('(root)')
-  })
+  it('accepts an entry with targets and sources absent, the no-coordinate case', () => {
+    const degenerate = component()
+    delete degenerate['targets']
+    delete degenerate['sources']
 
-  it('rejects an omitted classifier, because the wire form is an explicit null', () => {
-    const entry = component()
-    delete entry['classifier']
-    const result = validateResolvedPathsSidecar([entry])
-    expect(result.ok).toBe(false)
-    expect(result.ok === false && result.violations[0]?.path).toBe(
-      '[0].classifier',
-    )
-    expect(result.ok === false && result.violations[0]?.message).toContain(
-      'explicit JSON null',
-    )
-  })
-
-  it('accepts a string classifier', () => {
     expect(
-      validateResolvedPathsSidecar([component({ classifier: 'sources' })]).ok,
+      validateResolvedPathsSidecar({
+        [FACTS_FILE]: { components: [degenerate], projects: [] },
+      }).ok,
     ).toBe(true)
   })
 
-  // The consumer parses this payload with a strict schema, so an additive field
-  // is a hard parse failure on its side. Catching it here means the producer
-  // fails before it writes a sidecar the consumer will reject wholesale.
-  it('rejects an unknown field the way the strict consumer would', () => {
-    const result = validateResolvedPathsSidecar([
-      component({}) && { ...component(), schemaVersion: 2 },
-    ])
+  it('rejects a bare array, the shape the keyed record replaced', () => {
+    const result = validateResolvedPathsSidecar([component()])
+
     expect(result.ok).toBe(false)
-    expect(result.ok === false && result.violations[0]?.path).toBe(
-      '[0].schemaVersion',
+    expect(result.ok ? '' : result.violations[0]?.path).toBe('(root)')
+  })
+
+  it('rejects a reactor entry whose components is not an array', () => {
+    const result = validateResolvedPathsSidecar({
+      [FACTS_FILE]: { components: {}, projects: [] },
+    })
+
+    expect(result.ok).toBe(false)
+    expect(result.ok ? '' : result.violations[0]?.path).toBe(
+      `${FACTS_FILE}.components`,
+    )
+  })
+
+  it('rejects an unknown component field the way the strict consumer would', () => {
+    const result = validateResolvedPathsSidecar({
+      [FACTS_FILE]: {
+        components: [component({ ecosystem: 'maven' })],
+        projects: [],
+      },
+    })
+
+    expect(result.ok).toBe(false)
+    expect(result.ok ? '' : result.violations[0]?.path).toBe(
+      `${FACTS_FILE}.components[0].ecosystem`,
+    )
+  })
+
+  it('rejects an unknown project field the way the strict consumer would', () => {
+    const result = validateResolvedPathsSidecar({
+      [FACTS_FILE]: {
+        components: [],
+        projects: [project({ id: 'org.example:app:1.0.0' })],
+      },
+    })
+
+    expect(result.ok).toBe(false)
+    expect(result.ok ? '' : result.violations[0]?.path).toBe(
+      `${FACTS_FILE}.projects[0].id`,
+    )
+  })
+
+  it('rejects an unknown reactor-entry field', () => {
+    const result = validateResolvedPathsSidecar({
+      [FACTS_FILE]: { components: [], projects: [], metadata: {} },
+    })
+
+    expect(result.ok).toBe(false)
+    expect(result.ok ? '' : result.violations[0]?.path).toBe(
+      `${FACTS_FILE}.metadata`,
+    )
+  })
+
+  it('rejects a component missing its id', () => {
+    const headless = component()
+    delete headless['id']
+
+    const result = validateResolvedPathsSidecar({
+      [FACTS_FILE]: { components: [headless], projects: [] },
+    })
+
+    expect(result.ok).toBe(false)
+    expect(result.ok ? '' : result.violations[0]?.path).toBe(
+      `${FACTS_FILE}.components[0].id`,
     )
   })
 
   it('reports every malformed field rather than the first', () => {
-    const result = validateResolvedPathsSidecar([
-      { classifier: null, ext: 1, group: 2, name: 3, sources: 4, targets: 5 },
-    ])
+    const result = validateResolvedPathsSidecar({
+      [FACTS_FILE]: {
+        components: [component({ name: 7, targets: 'not an array' })],
+        projects: [],
+      },
+    })
+
     expect(result.ok).toBe(false)
-    expect(result.ok === false && result.violations.length).toBeGreaterThan(4)
+    expect(result.ok ? 0 : result.violations.length).toBeGreaterThan(1)
   })
 
-  it('keeps its field list in sync with the serialized shape', () => {
-    expect([...RESOLVED_COMPONENT_FIELDS]).toEqual(
+  it('keeps the component field list in sync with the serialized shape', () => {
+    expect([...SIDECAR_COMPONENT_FIELDS]).toEqual(
       Object.keys(component()).toSorted(),
+    )
+  })
+
+  it('keeps the project field list in sync with the serialized shape', () => {
+    expect([...SIDECAR_PROJECT_FIELDS]).toEqual(
+      Object.keys(project()).toSorted(),
     )
   })
 })
 
 describe('assertResolvedPathsSidecar', () => {
   it('returns the payload when it conforms', () => {
-    const payload = [component()]
+    const payload = sidecar()
     expect(assertResolvedPathsSidecar(payload, 'a test')).toBe(payload)
   })
 
@@ -106,23 +194,5 @@ describe('assertResolvedPathsSidecar', () => {
     expect(message).toContain('Where: a test')
     expect(message).toContain('Saw:')
     expect(message).toContain('Fix:')
-  })
-})
-
-describe('the ecosystem tag', () => {
-  it('still accepts a sidecar written before the tag existed', () => {
-    const legacy = component()
-    delete legacy['ecosystem']
-
-    expect(validateResolvedPathsSidecar([legacy]).ok).toBe(true)
-  })
-
-  it('rejects a non-string tag', () => {
-    const result = validateResolvedPathsSidecar([
-      component({ ecosystem: 7 } as never),
-    ])
-
-    expect(result.ok).toBe(false)
-    expect(result.ok ? [] : result.violations[0]?.path).toBe('[0].ecosystem')
   })
 })

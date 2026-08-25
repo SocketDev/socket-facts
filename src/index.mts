@@ -8,13 +8,18 @@ export {
   EMITTERS_DIR,
   emitterAssetPath,
   GRADLE_INIT_SCRIPT_FILENAME,
+  GRADLE_WORKSPACES_INIT_SCRIPT_FILENAME,
   gradleInitScriptPath,
+  gradleWorkspacesInitScriptPath,
   MAVEN_EXTENSION_DIR,
   MAVEN_EXTENSION_JAR_FILENAME,
   mavenExtensionJarPath,
   SBT_PLUGIN_FILENAME,
+  SBT_WORKSPACES_PLUGIN_FILENAME,
   SBT_PLUGIN_SOURCE_FILENAME,
+  SBT_WORKSPACES_PLUGIN_SOURCE_FILENAME,
   sbtPluginSourcePath,
+  sbtWorkspacesPluginSourcePath,
 } from './assets.mts'
 export { mavenCoordinateKey } from './contract/coordinate.mts'
 export { SOCKET_FACTS_SBOM_FORMAT } from './contract/sbom.mts'
@@ -28,8 +33,9 @@ export type {
 } from './contract/sbom.mts'
 export type {
   ResolvedArtifactPaths,
-  ResolvedComponent,
   ResolvedPathsSidecar,
+  SidecarComponentEntry,
+  SidecarProjectEntry,
 } from './contract/sidecar.mts'
 export {
   assertSocketFactsSbom,
@@ -38,7 +44,9 @@ export {
 } from './contract/validate-sbom.mts'
 export {
   assertResolvedPathsSidecar,
-  RESOLVED_COMPONENT_FIELDS,
+  REACTOR_ENTRY_FIELDS,
+  SIDECAR_COMPONENT_FIELDS,
+  SIDECAR_PROJECT_FIELDS,
   validateResolvedPathsSidecar,
 } from './contract/validate-sidecar.mts'
 export type {
@@ -90,8 +98,14 @@ export type {
 } from './pipeline/records.mts'
 export {
   accumulateSidecar,
+  attachResolvedPaths,
   createSidecarAccumulator,
+  hasResolvedPathsSidecarEntries,
+  hasSidecarEntries,
+  mergeResolvedPathsSidecars,
+  purlSortKey,
   serializeSidecar,
+  sortEntriesByPurl,
 } from './pipeline/sidecar.mts'
 export type { SidecarAccumulator } from './pipeline/sidecar.mts'
 export { classifyGradleFailure, GRADLE_DIALECT } from './report/gradle.mts'
@@ -137,14 +151,40 @@ export {
   scrubBuildToolEnv,
 } from './run/env.mts'
 export type { BuildEnvPolicy } from './run/env.mts'
+export {
+  compileExcludePathPatterns,
+  createExcludePathFilter,
+  excludePathGlobToRegexSource,
+  excludePathLiteralSource,
+  serializeExcludePathPatterns,
+  stripTrailingGlobstar,
+  translateExcludePathSegment,
+} from './run/exclude-paths-glob.mts'
+export type { ExcludePathFilter } from './run/exclude-paths-glob.mts'
 export { assertFactsInvocation } from './run/invocation.mts'
 export type { FactsInvocation } from './run/invocation.mts'
 export type { FactsGenerationResult } from './run/result.mts'
+export {
+  emitterProps,
+  invokeGradle,
+  invokeMaven,
+  invokeSbt,
+  spawnConfigFor,
+  writeSbtPlugin,
+} from './run/invoke-build-tool.mts'
 export { runFactsGeneration } from './run/run-facts-generation.mts'
+export {
+  enumerateGradleWorkspaces,
+  enumerateMavenWorkspaces,
+  enumerateSbtWorkspaces,
+  enumerateWorkspaces,
+  workspaceEnumeratorFor,
+} from './run/workspace-enumeration.mts'
+export type { WorkspaceEnumerationResult } from './run/workspace-enumeration.mts'
 export {
   DEFAULT_FACTS_GENERATION_TIMEOUT_MS,
   FACTS_GENERATION_TIMEOUT_ENV_VAR,
   factsGenerationTimeoutMs,
   parseTimeoutMs,
 } from './run/timeouts.mts'
-export type { FactsGenerationOptions } from './run/run-facts-generation.mts'
+export type { FactsGenerationOptions } from './run/invocation.mts'

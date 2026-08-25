@@ -23,6 +23,8 @@
 // before it is sent; it only matters to an out-of-band caller driving a
 // shipped emitter with hand-written patterns.
 
+import { GLOB_METACHARACTERS, translateGlobClass } from './glob-syntax.mts'
+
 export type ConfigGlobFilter = (name: string) => boolean
 
 // Comma-separated globs → anchored regex pattern sources.
@@ -64,35 +66,13 @@ export function globToRegexSource(glob: string): string {
       sb += '.'
       i += 1
     } else if (ch === '[') {
-      const j = glob.indexOf(']', i + 1)
-      // Treat as a class only with a non-empty body; else a literal `[`.
-      if (j <= i + 1) {
-        sb += '\\['
-        i += 1
-      } else {
-        let body = glob.slice(i + 1, j)
-        const neg = body.startsWith('!') || body.startsWith('^')
-        if (neg) {
-          body = body.slice(1)
-        }
-        if (!body) {
-          // `[!]`/`[^]` would emit `[^]`, which JS accepts but Java/.NET
-          // reject; the JS validity gate below can't catch that, so replicate
-          // the old per-language fallback: the WHOLE glob matches literally.
-          return literalRegexSource(glob)
-        }
-        // Only literal chars and `-` ranges are meaningful; neutralize
-        // regex-class tricks (`&` guards Java's `&&` class intersection).
-        // oxlint-disable-next-line socket/prefer-normalize-path -- regex escaping, not a path separator: a backslash inside a glob's class body is doubled so the emitted pattern reads it as a literal
-        body = body
-          .replace(/\\/g, '\\\\')
-          .replace(/\[/g, '\\[')
-          .replace(/\]/g, '\\]')
-          .replace(/&/g, '\\&')
-        sb += `[${neg ? '^' : ''}${body}]`
-        i = j + 1
+      const cls = translateGlobClass(glob, i)
+      if (!cls) {
+        return literalRegexSource(glob)
       }
-    } else if ('.\\^$|+(){}]'.includes(ch)) {
+      sb += cls.source
+      i = cls.next
+    } else if (GLOB_METACHARACTERS.includes(ch)) {
       sb += `\\${ch}`
       i += 1
     } else {

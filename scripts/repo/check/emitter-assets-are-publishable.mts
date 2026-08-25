@@ -43,6 +43,10 @@ const logger = getDefaultLogger()
 export const REQUIRED_EMITTER_FILES: readonly string[] = [
   path.join(EMITTERS_DIR, 'socket-facts.init.gradle'),
   path.join(EMITTERS_DIR, 'socket-facts.plugin.scala'),
+  // The workspace-enumeration family. A tarball missing these keeps facts
+  // generation working, so the loss shows up only as an empty subproject list.
+  path.join(EMITTERS_DIR, 'socket-workspaces.init.gradle'),
+  path.join(EMITTERS_DIR, 'socket-workspaces.plugin.scala'),
   path.join(MAVEN_EXTENSION_DIR, 'pom.xml'),
   path.join(DOTNET_TOOL_DIR, 'socket-facts-dotnet.csproj'),
   path.join(DOTNET_TOOL_DIR, 'FactsRunner.cs'),

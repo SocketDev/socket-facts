@@ -2,6 +2,7 @@ import path from 'node:path'
 
 import { BUILD_TOOLS, isBuildTool } from './build-tool.mts'
 
+import type { BuildEnvPolicy } from './env.mts'
 import type { BuildTool } from './build-tool.mts'
 
 export function assertFactsInvocation(
@@ -98,6 +99,34 @@ export type FactsInvocation = {
   env: NodeJS.ProcessEnv
   // Absolute path to the project directory to resolve.
   cwd: string
+}
+
+export type FactsGenerationOptions = FactsInvocation & {
+  // Reachability only: also materialize resolved artifact paths.
+  withFiles?: boolean | undefined
+  // Path to a newline-delimited GAV file scoping `withFiles` materialization;
+  // absent means materialize everything.
+  populateFilesFor?: string | undefined
+  includeConfigs?: string | undefined
+  excludeConfigs?: string | undefined
+  // Scan-root-relative paths whose subprojects are skipped wholesale. Source-
+  // file-level exclusion belongs to the downstream reachability analysis.
+  excludePaths?: readonly string[] | undefined
+  // sbt provisions the project's Scala toolchain (compiler/library/reflect)
+  // under `<global base>/boot`, and withFiles' artifactPaths point into it, so
+  // that directory must OUTLIVE the call. Supply one and the caller owns
+  // creating it and deleting it once those paths are consumed. Unset means an
+  // ephemeral dir, created and removed before the call returns — correct
+  // without withFiles, and the reason a withFiles sbt run needs this set.
+  // Only sbt reads it: no other emitter's artifactPaths point at the tmp dir.
+  tmpDir?: string | undefined
+  // Default 'scrub'. See env.mts for what 'scrub' removes and why.
+  envPolicy?: BuildEnvPolicy | undefined
+  stdio?: 'inherit' | 'pipe' | undefined
+  signal?: AbortSignal | undefined
+  // Ceiling on the build tool's wall time; 0 disables it. Defaults to
+  // SOCKET_FACTS_TIMEOUT_MS, then to DEFAULT_FACTS_GENERATION_TIMEOUT_MS.
+  timeoutMs?: number | undefined
 }
 
 export type Field = 'bin' | 'cwd' | 'env' | 'opts' | 'tool'

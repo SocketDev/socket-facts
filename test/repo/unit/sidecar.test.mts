@@ -1,3 +1,9 @@
+/*
+ * @file The wire format itself, and the maven paths through it, are covered
+ *   verbatim by socket-cli's own suite in parity/sidecar.test.mts. What lives
+ *   here is what only this package owns: the dotnet emitter's records reaching
+ *   the sidecar with a nuget purl type.
+ */
 import { describe, expect, it } from 'vitest'
 
 import { assembleFacts } from '../../../src/pipeline/assemble.mts'
@@ -8,184 +14,10 @@ import {
   serializeSidecar,
 } from '../../../src/pipeline/sidecar.mts'
 
-import type {
-  ResolvedArtifactPaths,
-  SocketFactsSbom,
-} from '../../../src/contract/sidecar.mts'
-import type { SidecarAccumulator } from '../../../src/pipeline/sidecar.mts'
-
-function emptyArtifactPaths(): ResolvedArtifactPaths {
-  return {
-    targetsByCoord: new Map(),
-    targetsByGav: new Map(),
-    sourcesByCoord: new Map(),
-    coords: new Set(),
-  }
-}
-
-function mkRootFixture(target: string): {
-  facts: SocketFactsSbom
-  paths: ResolvedArtifactPaths
-} {
-  const paths = emptyArtifactPaths()
-  paths.targetsByCoord.set('g:a:jar:1', [target])
-  return {
-    facts: {
-      components: [
-        {
-          type: 'maven',
-          namespace: 'g',
-          name: 'a',
-          version: '1',
-          qualifiers: { ext: 'jar' },
-          id: 'g:a:jar:1',
-        },
-      ],
-    },
-    paths,
-  }
-}
-
-describe('compute-artifacts sidecar', () => {
-  it('emits the frozen ResolvedComponent[] contract', () => {
-    const facts: SocketFactsSbom = {
-      components: [
-        {
-          type: 'maven',
-          namespace: 'com.example',
-          name: 'lib',
-          version: 'da517db',
-          qualifiers: { ext: 'jar' },
-          id: 'com.example:lib:jar:da517db',
-        },
-      ],
-    }
-    const artifactPaths = emptyArtifactPaths()
-    artifactPaths.targetsByCoord.set('com.example:lib:jar:da517db', [
-      '/abs/lib.jar',
-    ])
-    artifactPaths.sourcesByCoord.set('com.example:lib:jar:da517db', [
-      '/abs/lib/src/main/java',
-    ])
-
-    const acc: SidecarAccumulator = new Map()
-    accumulateSidecar(acc, facts, artifactPaths)
-    const resolved = serializeSidecar(acc)
-
-    expect(resolved).toEqual([
-      {
-        group: 'com.example',
-        name: 'lib',
-        version: 'da517db',
-        ext: 'jar',
-        classifier: null,
-        ecosystem: 'maven',
-        targets: ['/abs/lib.jar'],
-        sources: ['/abs/lib/src/main/java'],
-      },
-    ])
-  })
-
-  it('emits empty target/source arrays for a resolved-but-artifactless coord (pom/BOM)', () => {
-    const facts: SocketFactsSbom = {
-      components: [
-        {
-          type: 'maven',
-          namespace: 'com.example',
-          name: 'bom',
-          version: '1.0',
-          qualifiers: { ext: 'pom' },
-          id: 'com.example:bom:pom:1.0',
-        },
-      ],
-    }
-    const acc: SidecarAccumulator = new Map()
-    accumulateSidecar(acc, facts, emptyArtifactPaths())
-    const resolved = serializeSidecar(acc)
-
-    expect(resolved).toHaveLength(1)
-    expect(resolved[0]!.targets).toEqual([])
-    expect(resolved[0]!.sources).toEqual([])
-  })
-
-  it('preserves a classifier qualifier and defaults it to null when absent', () => {
-    const facts: SocketFactsSbom = {
-      components: [
-        {
-          type: 'maven',
-          namespace: 'g',
-          name: 'a',
-          version: '1',
-          qualifiers: { ext: 'jar', classifier: 'sources' },
-          id: 'g:a:jar:sources:1',
-        },
-      ],
-    }
-    const acc: SidecarAccumulator = new Map()
-    accumulateSidecar(acc, facts, emptyArtifactPaths())
-    expect(serializeSidecar(acc)[0]!.classifier).toBe('sources')
-  })
-
-  it('carries a first-party module (project, not a component) source/target roots', () => {
-    const facts: SocketFactsSbom = {
-      // The app module is a project but nothing depends on it, so it is absent
-      // from components — its source roots must still reach the sidecar.
-      components: [],
-      projects: [
-        {
-          type: 'maven',
-          namespace: 'com.example',
-          name: 'app',
-          version: '1.0',
-          subprojectDir: 'app',
-          dependencies: [],
-          resolvedAs: [],
-        },
-      ],
-    }
-    const artifactPaths = emptyArtifactPaths()
-    artifactPaths.sourcesByCoord.set('com.example:app:1.0', [
-      '/abs/app/src/main/java',
-    ])
-    artifactPaths.targetsByCoord.set('com.example:app:1.0', [
-      '/abs/app/build/classes',
-    ])
-
-    const acc: SidecarAccumulator = new Map()
-    accumulateSidecar(acc, facts, artifactPaths)
-    const resolved = serializeSidecar(acc)
-
-    expect(resolved).toEqual([
-      {
-        group: 'com.example',
-        name: 'app',
-        version: '1.0',
-        ext: '',
-        classifier: null,
-        ecosystem: 'maven',
-        targets: ['/abs/app/build/classes'],
-        sources: ['/abs/app/src/main/java'],
-      },
-    ])
-  })
-
-  it('merges the same coordinate across build roots, unioning paths', () => {
-    const acc: SidecarAccumulator = new Map()
-    const a = mkRootFixture('/root-a/a.jar')
-    const b = mkRootFixture('/root-b/a.jar')
-    accumulateSidecar(acc, a.facts, a.paths)
-    accumulateSidecar(acc, b.facts, b.paths)
-    const resolved = serializeSidecar(acc)
-
-    expect(resolved).toHaveLength(1)
-    expect(resolved[0]!.targets).toEqual(['/root-a/a.jar', '/root-b/a.jar'])
-  })
-})
-
 // The dotnet emitter's records for one project that resolved two target
-// frameworks. NuGet coordinates are groupless, so the `group` field is empty
-// throughout — that is what makes the namespace and accumulator-key handling
-// load-bearing rather than cosmetic.
+// frameworks. NuGet coordinates are groupless, so the namespace is empty
+// throughout — that is what makes the purl type load-bearing rather than
+// decoration.
 const DOTNET_RECORDS = [
   'meta\tdotnet\t8.0.404\t',
   'project\t/repo/App/App.csproj\t\tApp\t1.0.0\tApp',
@@ -200,32 +32,83 @@ const DOTNET_RECORDS = [
   'scanned\tnet6.0',
 ].join('\n')
 
-describe('sidecar ecosystem tagging', () => {
+// A Maven build whose artifactId collides with the NuGet id above.
+const MAVEN_RECORDS = [
+  'meta\tmaven\t3.9.6\t17',
+  'root\tr1\t:app\tcompile\t1',
+  'node\tr1\tNewtonsoft.Json:13.0.3\t\tNewtonsoft.Json\t13.0.3\t\t\t1',
+].join('\n')
+
+const DOTNET_FACTS_FILE = '/repo/App/.socket.facts.json'
+
+const MAVEN_FACTS_FILE = '/repo/.socket.facts.json'
+
+describe('sidecar purl types across ecosystems', () => {
   it('keeps a nuget coordinate separate from a maven one of the same name', () => {
     const acc = createSidecarAccumulator()
     const dotnet = assembleFacts(parseRecords(DOTNET_RECORDS), {
       fileExists: () => true,
     })
-    accumulateSidecar(acc, dotnet.facts, dotnet.artifactPaths)
-
-    // A groupless NuGet id and a Maven artifactId can produce the same
-    // coordinate key; only the ecosystem tag keeps them apart.
-    const maven = assembleFacts(
-      parseRecords(
-        [
-          'meta\tmaven\t3.9.6\t17',
-          'root\tr1\t:app\tcompile\t1',
-          'node\tr1\tNewtonsoft.Json:13.0.3\t\tNewtonsoft.Json\t13.0.3\t\t\t1',
-        ].join('\n'),
-      ),
-      { fileExists: () => true },
+    accumulateSidecar(
+      acc,
+      dotnet.facts,
+      dotnet.artifactPaths,
+      DOTNET_FACTS_FILE,
     )
-    accumulateSidecar(acc, maven.facts, maven.artifactPaths)
+    const maven = assembleFacts(parseRecords(MAVEN_RECORDS), {
+      fileExists: () => true,
+    })
+    accumulateSidecar(acc, maven.facts, maven.artifactPaths, MAVEN_FACTS_FILE)
+    const resolved = serializeSidecar(acc)
 
-    const ecosystems = serializeSidecar(acc)
-      .filter(e => e.name === 'Newtonsoft.Json')
-      .map(e => e.ecosystem)
-      .toSorted()
-    expect(ecosystems).toStrictEqual(['maven', 'nuget'])
+    // Two guarantees, not one: the facts-file key scopes each reactor's
+    // entries, and the purl type discriminates within a bucket.
+    const dotnetEntry = resolved[DOTNET_FACTS_FILE]!.components.find(
+      c => c.name === 'Newtonsoft.Json',
+    )
+    const mavenEntry = resolved[MAVEN_FACTS_FILE]!.components.find(
+      c => c.name === 'Newtonsoft.Json',
+    )
+
+    expect(dotnetEntry?.type).toBe('nuget')
+    expect(mavenEntry?.type).toBe('maven')
+  })
+
+  it('carries the dotnet runtime assembly onto the nuget component', () => {
+    const acc = createSidecarAccumulator()
+    const dotnet = assembleFacts(parseRecords(DOTNET_RECORDS), {
+      fileExists: () => true,
+    })
+    accumulateSidecar(
+      acc,
+      dotnet.facts,
+      dotnet.artifactPaths,
+      DOTNET_FACTS_FILE,
+    )
+
+    const entry = serializeSidecar(acc)[DOTNET_FACTS_FILE]!.components.find(
+      c => c.name === 'Newtonsoft.Json',
+    )
+    expect(entry?.targets).toEqual([
+      '/cache/newtonsoft.json/13.0.3/lib/net6.0/Newtonsoft.Json.dll',
+    ])
+  })
+
+  it('carries the first-party dotnet project source and output roots', () => {
+    const acc = createSidecarAccumulator()
+    const dotnet = assembleFacts(parseRecords(DOTNET_RECORDS), {
+      fileExists: () => true,
+    })
+    accumulateSidecar(
+      acc,
+      dotnet.facts,
+      dotnet.artifactPaths,
+      DOTNET_FACTS_FILE,
+    )
+
+    const project = serializeSidecar(acc)[DOTNET_FACTS_FILE]!.projects[0]!
+    expect(project.type).toBe('nuget')
+    expect(project.sources).toEqual(['/repo/App'])
+    expect(project.targets).toEqual(['/repo/App/bin/App.dll'])
   })
 })

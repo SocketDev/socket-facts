@@ -1,3 +1,4 @@
+import { checkComponent, checkProject } from './validate-sbom.mts'
 import {
   checkNoUnknownKeys,
   checkStringArray,
@@ -6,27 +7,43 @@ import {
   isPlainObject,
 } from './violations.mts'
 
-import type { ResolvedComponent, ResolvedPathsSidecar } from './sidecar.mts'
+import type { ResolvedPathsSidecar } from './sidecar.mts'
 import type { ContractValidation, ContractViolation } from './violations.mts'
 
-// Mirrors the consumer's strict schema exactly. Sorted so a reader can diff it
-// against the consumer's field list at a glance.
-export const RESOLVED_COMPONENT_FIELDS: readonly string[] = [
-  'classifier',
-  'ecosystem',
-  'ext',
-  'group',
+// Mirrors the consumer's strict schemas exactly, field for field. Sorted so a
+// reader can diff each list against the consumer's own `.strict()` object at a
+// glance — an entry here that the consumer does not list gets the whole payload
+// rejected, not just that field.
+export const SIDECAR_COMPONENT_FIELDS: readonly string[] = [
+  'dependencies',
+  'dev',
+  'direct',
+  'id',
   'name',
+  'namespace',
+  'qualifiers',
   'sources',
   'targets',
+  'type',
   'version',
 ]
 
-const REQUIRED_STRING_FIELDS: readonly string[] = [
-  'ext',
-  'group',
+export const SIDECAR_PROJECT_FIELDS: readonly string[] = [
+  'dependencies',
   'name',
+  'namespace',
+  'qualifiers',
+  'resolvedAs',
+  'sources',
+  'subprojectDir',
+  'targets',
+  'type',
   'version',
+]
+
+export const REACTOR_ENTRY_FIELDS: readonly string[] = [
+  'components',
+  'projects',
 ]
 
 export function assertResolvedPathsSidecar(
@@ -44,7 +61,7 @@ export function assertResolvedPathsSidecar(
   )
 }
 
-export function checkComponent(
+export function checkReactorEntry(
   value: unknown,
   path: string,
   violations: ContractViolation[],
@@ -52,48 +69,75 @@ export function checkComponent(
   if (!isPlainObject(value)) {
     violations.push({
       path,
-      message: `saw ${describeType(value)}, wanted an object`,
+      message: `saw ${describeType(value)}, wanted an object of projects and components`,
     })
     return
   }
-  for (let i = 0, { length } = REQUIRED_STRING_FIELDS; i < length; i += 1) {
-    const field = REQUIRED_STRING_FIELDS[i]!
-    if (typeof value[field] !== 'string') {
+  for (const field of ['components', 'projects']) {
+    if (!Array.isArray(value[field])) {
       violations.push({
         path: `${path}.${field}`,
-        message: `saw ${describeType(value[field])}, wanted a string`,
+        message: `saw ${describeType(value[field])}, wanted an array`,
       })
     }
   }
-  // An absent key and an explicit null are different bytes on the wire, and the
-  // consumer's schema accepts only `string | null`.
-  if (!('classifier' in value)) {
-    violations.push({
-      path: `${path}.classifier`,
-      message:
-        'field is absent, wanted an explicit JSON null when the artifact has no classifier',
-    })
-  } else if (
-    value['classifier'] !== null &&
-    typeof value['classifier'] !== 'string'
-  ) {
-    violations.push({
-      path: `${path}.classifier`,
-      message: `saw ${describeType(value['classifier'])}, wanted a string or an explicit null`,
-    })
+  const components = value['components']
+  if (Array.isArray(components)) {
+    for (let i = 0, { length } = components; i < length; i += 1) {
+      checkSidecarComponent(
+        components[i],
+        `${path}.components[${i}]`,
+        violations,
+      )
+    }
   }
-  // Strict producer, liberal consumer: this package always writes `ecosystem`,
-  // and a payload without it is still valid — that is what every sidecar
-  // written before the tag existed looks like, and it means 'maven'.
-  if ('ecosystem' in value && typeof value['ecosystem'] !== 'string') {
-    violations.push({
-      path: `${path}.ecosystem`,
-      message: `saw ${describeType(value['ecosystem'])}, wanted a purl type string such as "maven" or "nuget"`,
-    })
+  const projects = value['projects']
+  if (Array.isArray(projects)) {
+    for (let i = 0, { length } = projects; i < length; i += 1) {
+      checkSidecarProject(projects[i], `${path}.projects[${i}]`, violations)
+    }
   }
-  checkStringArray(value['sources'], `${path}.sources`, violations)
-  checkStringArray(value['targets'], `${path}.targets`, violations)
-  checkNoUnknownKeys(value, RESOLVED_COMPONENT_FIELDS, path, violations)
+  checkNoUnknownKeys(value, REACTOR_ENTRY_FIELDS, path, violations)
+}
+
+// Both fields absent is valid: it means there was no computable coordinate to
+// resolve against, and the consumer defaults each to `[]`.
+export function checkResolvedPaths(
+  container: Record<string, unknown>,
+  path: string,
+  violations: ContractViolation[],
+): void {
+  for (const field of ['sources', 'targets']) {
+    if (container[field] !== undefined) {
+      checkStringArray(container[field], `${path}.${field}`, violations)
+    }
+  }
+}
+
+export function checkSidecarComponent(
+  value: unknown,
+  path: string,
+  violations: ContractViolation[],
+): void {
+  checkComponent(value, path, violations)
+  if (!isPlainObject(value)) {
+    return
+  }
+  checkResolvedPaths(value, path, violations)
+  checkNoUnknownKeys(value, SIDECAR_COMPONENT_FIELDS, path, violations)
+}
+
+export function checkSidecarProject(
+  value: unknown,
+  path: string,
+  violations: ContractViolation[],
+): void {
+  checkProject(value, path, violations)
+  if (!isPlainObject(value)) {
+    return
+  }
+  checkResolvedPaths(value, path, violations)
+  checkNoUnknownKeys(value, SIDECAR_PROJECT_FIELDS, path, violations)
 }
 
 // Narrowing helper rather than a cast: the per-entry checks above already
@@ -101,27 +145,29 @@ export function checkComponent(
 export function isCheckedSidecar(
   value: unknown,
   violations: readonly ContractViolation[],
-): value is ResolvedComponent[] {
-  return Array.isArray(value) && violations.length === 0
+): value is ResolvedPathsSidecar {
+  return isPlainObject(value) && violations.length === 0
 }
 
 export function validateResolvedPathsSidecar(
   input: unknown,
 ): ContractValidation<ResolvedPathsSidecar> {
-  const violations: ContractViolation[] = []
-  if (!Array.isArray(input)) {
+  if (!isPlainObject(input)) {
     return {
       ok: false,
       violations: [
         {
           path: '(root)',
-          message: `saw ${describeType(input)}, wanted a bare array of resolved components`,
+          message: `saw ${describeType(input)}, wanted an object keyed by absolute .socket.facts.json path`,
         },
       ],
     }
   }
-  for (let i = 0, { length } = input; i < length; i += 1) {
-    checkComponent(input[i], `[${i}]`, violations)
+  const violations: ContractViolation[] = []
+  const factsFiles = Object.keys(input)
+  for (let i = 0, { length } = factsFiles; i < length; i += 1) {
+    const factsFile = factsFiles[i]!
+    checkReactorEntry(input[factsFile], factsFile, violations)
   }
   return isCheckedSidecar(input, violations)
     ? { ok: true, value: input }

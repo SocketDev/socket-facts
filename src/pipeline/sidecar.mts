@@ -1,121 +1,118 @@
 import { mavenCoordinateKey } from '../contract/coordinate.mts'
 
-import type { SocketFactsSbom } from '../contract/sbom.mts'
+import type { AnyPURL, SocketFactsSbom } from '../contract/sbom.mts'
 import type {
   ResolvedArtifactPaths,
-  ResolvedComponent,
   ResolvedPathsSidecar,
+  SidecarComponentEntry,
+  SidecarProjectEntry,
 } from '../contract/sidecar.mts'
 
 // Emit an entry for every SBOM component AND every first-party project: a
 // top-level module is a project, not a dependency component, yet its source
-// roots are where reachability starts, so the sidecar must carry them. The
-// ecosystem is each artifact's own purl `type`, passed through verbatim.
+// roots are where reachability starts, so the sidecar must carry them.
+// A second call for the same factsFile (a dual-marker directory where two
+// build tools both target it) overwrites rather than merges, matching the
+// existing last-writer-wins convention for that case.
 export function accumulateSidecar(
   acc: SidecarAccumulator,
   facts: SocketFactsSbom,
   artifactPaths: ResolvedArtifactPaths,
+  factsFile: string,
 ): void {
-  for (const comp of facts.components) {
-    addEntry(
-      acc,
-      artifactPaths,
-      comp.namespace ?? '',
-      comp.name,
-      comp.version ?? '',
-      comp.qualifiers?.['ext'] ?? '',
-      // oxlint-disable-next-line socket/prefer-undefined-over-null -- frozen sidecar contract serializes an explicit JSON null
-      comp.qualifiers?.['classifier'] ?? null,
-      comp.type,
-    )
-  }
-  // First-party modules have no ext/classifier.
-  for (const proj of facts.projects ?? []) {
-    addEntry(
-      acc,
-      artifactPaths,
-      proj.namespace ?? '',
-      proj.name,
-      proj.version ?? '',
-      '',
-      // oxlint-disable-next-line socket/prefer-undefined-over-null -- frozen sidecar contract serializes an explicit JSON null
-      null,
-      proj.type,
-    )
-  }
+  acc.set(factsFile, {
+    components: facts.components.map(comp =>
+      attachResolvedPaths(comp, artifactPaths),
+    ),
+    projects: (facts.projects ?? []).map(proj =>
+      attachResolvedPaths(proj, artifactPaths),
+    ),
+  })
 }
 
-export function addEntry(
-  acc: SidecarAccumulator,
+// Both fields omitted means resolution could not even be attempted — the only
+// case is a degenerate entry with no computable coordinate at all, since every
+// entry reaching here already came from a resolved graph node (an unresolved
+// dependency lives in the resolution report, not here).
+export function attachResolvedPaths<T extends AnyPURL>(
+  entry: T,
   artifactPaths: ResolvedArtifactPaths,
-  group: string,
-  name: string,
-  version: string,
-  ext: string,
-  classifier: string | null,
-  ecosystem: string,
-): void {
+): T & { targets?: string[] | undefined; sources?: string[] | undefined } {
   const coordKey = mavenCoordinateKey({
-    groupId: group,
-    artifactId: name,
-    type: ext || undefined,
-    classifier: classifier ?? undefined,
-    version: version || undefined,
+    groupId: entry.namespace,
+    artifactId: entry.name,
+    type: entry.qualifiers?.['ext'],
+    classifier: entry.qualifiers?.['classifier'],
+    version: entry.version,
   })
   if (!coordKey) {
-    return
+    return { ...entry }
   }
-  // Namespaced by ecosystem so a groupless NuGet coordinate can never merge
-  // with a Maven one. This key is accumulator-internal; the wire format
-  // carries the ecosystem tag on the entry itself.
-  const accKey = `${ecosystem}|${coordKey}`
-  let entry = acc.get(accKey)
-  if (!entry) {
-    entry = {
-      group,
-      name,
-      version,
-      ext,
-      classifier,
-      ecosystem,
-      targets: [],
-      sources: [],
-    }
-    acc.set(accKey, entry)
+  return {
+    ...entry,
+    targets: (artifactPaths.targetsByCoord.get(coordKey) ?? []).toSorted(),
+    sources: (artifactPaths.sourcesByCoord.get(coordKey) ?? []).toSorted(),
   }
-  pushUnique(entry.targets, artifactPaths.targetsByCoord.get(coordKey) ?? [])
-  pushUnique(entry.sources, artifactPaths.sourcesByCoord.get(coordKey) ?? [])
 }
 
 export function createSidecarAccumulator(): SidecarAccumulator {
   return new Map()
 }
 
-// Keyed by full coordinate; unions paths so multiple build roots merge into one.
-export type SidecarAccumulator = Map<string, ResolvedComponent>
-
-export function pushUnique(into: string[], from: string[]): void {
-  for (let i = 0, { length } = from; i < length; i += 1) {
-    const f = from[i]!
-    if (!into.includes(f)) {
-      into.push(f)
-    }
-  }
+export function hasResolvedPathsSidecarEntries(
+  sidecar: ResolvedPathsSidecar,
+): boolean {
+  return Object.keys(sidecar).length > 0
 }
+
+export function hasSidecarEntries(acc: SidecarAccumulator): boolean {
+  return acc.size > 0
+}
+
+// Combines two already-serialized sidecars (e.g. the recursive-discovery path
+// and the plain auto-manifest path). Keys are already scoped to one facts file
+// each and cannot collide between the two inputs in practice, so this is a
+// plain merge; the later input wins on a genuine key collision.
+export function mergeResolvedPathsSidecars(
+  a: ResolvedPathsSidecar,
+  b: ResolvedPathsSidecar,
+): ResolvedPathsSidecar {
+  const merged: ResolvedPathsSidecar = Object.create(null)
+  return Object.assign(merged, a, b)
+}
+
+export function purlSortKey(entry: AnyPURL): string {
+  return `${entry.type}:${entry.namespace ?? ''}:${entry.name}:${entry.version ?? ''}:${entry.qualifiers?.['ext'] ?? ''}:${entry.qualifiers?.['classifier'] ?? ''}`
+}
+
+// Keyed by the absolute facts-file path each bucket describes.
+export type SidecarAccumulator = Map<
+  string,
+  { projects: SidecarProjectEntry[]; components: SidecarComponentEntry[] }
+>
 
 export function serializeSidecar(
   acc: SidecarAccumulator,
 ): ResolvedPathsSidecar {
-  const resolved = [...acc.values()]
-  for (let i = 0, { length } = resolved; i < length; i += 1) {
-    const entry = resolved[i]!
-    entry.targets.sort()
-    entry.sources.sort()
+  // Null-prototype so a facts-file path like "__proto__" cannot reach
+  // Object.prototype; typed on the declaration rather than asserted.
+  const result: ResolvedPathsSidecar = Object.create(null)
+  const factsFiles = [...acc.keys()].toSorted()
+  for (let i = 0, { length } = factsFiles; i < length; i += 1) {
+    const factsFile = factsFiles[i]!
+    const bucket = acc.get(factsFile)!
+    result[factsFile] = {
+      projects: sortEntriesByPurl(bucket.projects),
+      components: sortEntriesByPurl(bucket.components),
+    }
   }
-  resolved.sort((a, b) => {
-    const ka = `${a.ecosystem ?? ''}:${a.group}:${a.name}:${a.ext}:${a.classifier ?? ''}:${a.version}`
-    const kb = `${b.ecosystem ?? ''}:${b.group}:${b.name}:${b.ext}:${b.classifier ?? ''}:${b.version}`
+  return result
+}
+
+export function sortEntriesByPurl<T extends AnyPURL>(entries: T[]): T[] {
+  return entries.toSorted((a, b) => {
+    const ka = purlSortKey(a)
+    const kb = purlSortKey(b)
     return ka < kb ? -1 : ka > kb ? 1 : 0
   })
-  return resolved
 }

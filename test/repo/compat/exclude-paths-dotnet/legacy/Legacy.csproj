@@ -1,0 +1,7 @@
+<!-- No PackageReference: the fixture is about which PROJECTS reach the facts,
+     so it stays restorable without a network. -->
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+  </PropertyGroup>
+</Project>

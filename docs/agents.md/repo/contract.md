@@ -9,10 +9,10 @@ library rather than a socket-cli internal, so treat them as published shapes.
 
 The reachability consumer hand-maintains its own copies:
 
-- `coana-package-manager/packages/shared-types/src/socket-facts-schema.ts` - a
-  parallel type declaration of the SBOM side.
-- `.../java/sidecar-artifact-paths.ts` - a zod schema for the sidecar, with
-  `.strict()` on the component object.
+- a parallel type declaration of the SBOM side, in its shared-types package.
+- `sidecar-artifact-paths.ts` in its JVM reachability analyzer - a zod schema for
+  the sidecar: a record keyed by facts-file path, with `.strict()` on both the
+  component and the project object.
 
 Two hand-maintained copies of one format drift, and the drift is silent until a
 scan produces the wrong answer. What this package exports is a superset the
@@ -25,20 +25,15 @@ already reimplements.
 When a coordinate is missing from the sidecar, the consumer does not skip it and
 does not downgrade its vulnerabilities to a precomputed result. It resolves the
 coordinate itself, best-effort: local caches first, then
-`mvn -Dtransitive=false dependency:get`, then HTTP. The fallback lives in
-`coana-package-manager/packages/reachability-analyzers/src/whole-program-code-aware-vulnerability-scanner/java/java-code-aware-vulnerability-scanner.ts:807-826`,
-calling the `resolveArtifact` helper at line 710 of the same file.
+`mvn -Dtransitive=false dependency:get`, then HTTP. The fallback lives in the
+consumer's JVM reachability scanner, in its own artifact-resolution helper.
 
 The history is worth knowing, because the short-lived behavior is the one people
-remember. Coana's
-[#2292](https://github.com/coana-tech/coana-package-manager/pull/2292)
-(`548637bbc`, 2026-06-30) landed the sidecar consumer with a hard short-circuit:
-uncovered meant unresolved.
-[#2295](https://github.com/coana-tech/coana-package-manager/pull/2295)
-(`5d3056a1b`, 2026-07-01) relaxed it the next day, because reachability is not
-scoped per project yet, so a scan legitimately carries artifacts from
-subprojects outside the sidecar's build root. The pinned 15.9.5 contains the
-relaxed behavior.
+remember. The consumer first landed the sidecar with a hard short-circuit on
+2026-06-30: uncovered meant unresolved. It relaxed that the next day, because
+reachability is not scoped per project yet, so a scan legitimately carries
+artifacts from subprojects outside the sidecar's build root. The version pinned
+today carries the relaxed behavior.
 
 The consequence is the load-bearing part. **The sidecar is an accelerator, not an
 authority.** A gap does not fail the scan and does not narrow it - it silently
@@ -49,41 +44,39 @@ concern worth surfacing, not a benign fallback. Nothing in the wire format
 signals the miss; the only evidence is a `resolvedSource` other than `sidecar` /
 `sidecar-no-artifact` in the consumer's debug log.
 
-## `classifier` serializes as an explicit JSON null
-
-The fleet prefers `undefined` over `null` everywhere except here. The sidecar's
-consumer types `classifier` as `z.string().nullable()`, and an absent key is a
-different payload from an explicit `null`. `validateResolvedPathsSidecar`
-therefore rejects a component whose `classifier` key is missing, even though
-every other absent-optional would be fine.
-
 ## An additive field is a coordinated release
 
-The sidecar consumer's component schema is `.strict()`. Under a strict schema an
+The sidecar consumer parses each component AND each project with a `.strict()`
+schema, inside a record keyed by facts-file path. Under a strict schema an
 unrecognized key is not ignored - it fails the parse, and the failure is
-whole-payload, not per-field. So adding **any** field to `ResolvedComponent`,
-including a `schemaVersion` intended to make future additions safe, breaks every
-consumer pinned to a version released before the addition.
+whole-payload, not per-field. So adding **any** field to `SidecarComponentEntry`
+or `SidecarProjectEntry`, including a `schemaVersion` intended to make future
+additions safe, breaks every consumer pinned to a version released before the
+addition.
 
 `validateResolvedPathsSidecar` enforces this from the producer side: an unknown
 key is a violation here, so a producer cannot emit a payload the consumer will
-reject.
+reject. `SIDECAR_COMPONENT_FIELDS` and `SIDECAR_PROJECT_FIELDS` are sorted so
+each list diffs against the consumer's own `.strict()` object at a glance.
 
-### `ecosystem` is the one field added under that rule
+### The facts-file key is the scope
 
-`ResolvedComponent.ecosystem` carries the artifact's purl type, because a
-groupless NuGet id and a Maven artifactId can produce the same coordinate key
-and there is no other way to tell them apart. Adding it follows the rule above
-rather than escaping it: **every** reachability scan, single-ecosystem JVM ones
-included, fails at the sidecar handoff until the consumer's schema accepts the
-key, because the producer stamps the tag on every entry and a `.strict()` parse
-rejects the whole payload rather than the one field. Releasing the consumer's
-schema change first is the gate on shipping a version of this package that
-emits it.
+The sidecar is keyed by the absolute path of the `.socket.facts.json` whose own
+`projects[]`/`components[]` each bucket describes, and that key is what
+per-subproject reachability reads. Two independent reactors that emit the same
+purl identity cannot collide, because each is only ever looked up within its own
+key. There is no cross-reactor deduplication: the same external dependency
+resolved by several reactors is deliberately duplicated across all of their
+`components[]`, which is simpler and safer than a shared bucket.
 
-The validator is asymmetric here on purpose: it accepts a payload with no
-`ecosystem` key, because that is exactly what a sidecar written before the tag
-existed looks like, and it means `maven`. Strict producer, liberal consumer.
+### The purl `type` discriminates the ecosystem
+
+A groupless NuGet id and a Maven artifactId can produce the same coordinate key,
+and an entry's purl `type` is what tells them apart - `maven` for
+gradle/maven/sbt, `nuget` for dotnet. It is the facts entry's own `type` carried
+through verbatim, so there is no narrowing and no re-derivation. An artifact's
+packaging and classifier travel in `qualifiers.ext` and
+`qualifiers.classifier`, the same places the SBOM puts them.
 
 ### Proposed versioning approach - not adopted
 

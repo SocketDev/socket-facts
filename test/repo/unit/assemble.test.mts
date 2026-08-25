@@ -26,6 +26,8 @@ const RECORDS = [
   'scanned\truntimeClasspath',
 ].join('\n')
 
+const FACTS_FILE = '/abs/.socket.facts.json'
+
 describe('records → assemble → sidecar', () => {
   it('carries first-party project paths, external jars, and artifactless BOMs', () => {
     // Inject fileExists so the synthetic absolute paths aren't filtered out.
@@ -40,28 +42,35 @@ describe('records → assemble → sidecar', () => {
     expect(facts.metadata).not.toHaveProperty('schemaVersion')
 
     const acc: SidecarAccumulator = new Map()
-    accumulateSidecar(acc, facts, artifactPaths)
-    const byName = new Map(serializeSidecar(acc).map(r => [r.name, r]))
+    accumulateSidecar(acc, facts, artifactPaths, FACTS_FILE)
+    const bucket = serializeSidecar(acc)[FACTS_FILE]!
+    const componentsByName = new Map(bucket.components.map(c => [c.name, c]))
 
-    // First-party module: project-only (not a node), yet its source/output
-    // roots reach the sidecar.
-    expect(byName.get('app')).toEqual({
-      group: 'com.example',
-      name: 'app',
-      version: '1.0',
-      ext: '',
-      classifier: null,
-      ecosystem: 'maven',
-      targets: ['/abs/app/build/classes'],
-      sources: ['/abs/app/src/main/java'],
-    })
+    // First-party module: a project (not a node), yet its source/output roots
+    // reach the sidecar.
+    expect(bucket.projects).toEqual([
+      {
+        type: 'maven',
+        namespace: 'com.example',
+        name: 'app',
+        version: '1.0',
+        subprojectDir: '/abs/app',
+        dependencies: ['com.example:bom:2.0', 'com.example:lib:jar:1.0'],
+        resolvedAs: [],
+        targets: ['/abs/app/build/classes'],
+        sources: ['/abs/app/src/main/java'],
+      },
+    ])
 
     // External dependency: jar target, no sources.
-    expect(byName.get('lib')?.targets).toEqual(['/abs/lib.jar'])
-    expect(byName.get('lib')?.sources).toEqual([])
+    expect(componentsByName.get('lib')?.targets).toEqual(['/abs/lib.jar'])
+    expect(componentsByName.get('lib')?.sources).toEqual([])
 
     // Artifactless BOM: present with empty arrays (resolved, no artifact).
-    expect(byName.get('bom')).toMatchObject({ targets: [], sources: [] })
+    expect(componentsByName.get('bom')).toMatchObject({
+      targets: [],
+      sources: [],
+    })
   })
 })
 

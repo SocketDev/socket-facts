@@ -24,6 +24,8 @@ import {
 } from '../../src/pipeline/sidecar.mts'
 import { renderResolutionErrorReport } from '../../src/report/render.mts'
 
+const FACTS_FILE = '/fuzz/.socket.facts.json'
+
 fuzz('the records parser never throws on arbitrary bytes', data => {
   const parsed = parseRecords(data.toString('utf8'))
   for (const [rootId, root] of parsed.roots) {
@@ -69,13 +71,23 @@ fuzz('the sidecar accumulator always emits a contract-valid payload', data => {
     parseRecords(data.toString('utf8')),
   )
   const acc = createSidecarAccumulator()
-  accumulateSidecar(acc, facts, artifactPaths)
-  const result = validateResolvedPathsSidecar(serializeSidecar(acc))
+  accumulateSidecar(acc, facts, artifactPaths, FACTS_FILE)
+  const sidecar = serializeSidecar(acc)
+  const result = validateResolvedPathsSidecar(sidecar)
   if (!result.ok) {
     throw new Error(
       `sidecar accumulator emitted a payload the strict consumer would reject: ${result.violations
         .map(violation => `${violation.path}: ${violation.message}`)
         .join('; ')}`,
+    )
+  }
+  // The payload is keyed by the facts file its entries describe, and the
+  // validator accepts ANY string key — so without this the fuzz would pass on a
+  // payload keyed by literal "undefined" and guard nothing about the contract.
+  const keys = Object.keys(sidecar)
+  if (keys.length !== 1 || keys[0] !== FACTS_FILE) {
+    throw new Error(
+      `sidecar must be keyed by the facts file it describes: saw ${JSON.stringify(keys)}, wanted [${JSON.stringify(FACTS_FILE)}]`,
     )
   }
 })

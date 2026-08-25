@@ -10,6 +10,8 @@ internal sealed class ToolOptions {
       --with-files                Also emit resolved artifact/source paths.
       --include-configs <csv>     Comma-separated anchored regex patterns for target framework names.
       --exclude-configs <csv>     Comma-separated anchored regex patterns; applied after includes.
+      --exclude-paths <csv>       Comma-separated anchored regex patterns for root-relative
+                                  project dirs; a matching project is skipped whole.
       --no-restore                Skip the in-process restore (use existing restore output).
       --restore-timeout-sec <n>   Cancel restore after n seconds (default 900).
       --verbose                   Log progress to stderr.
@@ -22,6 +24,7 @@ internal sealed class ToolOptions {
   public bool WithFiles;
   public string IncludeConfigs = "";
   public string ExcludeConfigs = "";
+  public string ExcludePaths = "";
   public bool NoRestore;
   public int RestoreTimeoutSec = 900;
   public bool Verbose;
@@ -46,6 +49,9 @@ internal sealed class ToolOptions {
           break;
         case "--exclude-configs":
           opts.ExcludeConfigs = Next(args, ref i, arg);
+          break;
+        case "--exclude-paths":
+          opts.ExcludePaths = Next(args, ref i, arg);
           break;
         case "--no-restore":
           opts.NoRestore = true;

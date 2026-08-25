@@ -10,8 +10,9 @@ export type {
 } from './sbom.mts'
 export type {
   ResolvedArtifactPaths,
-  ResolvedComponent,
   ResolvedPathsSidecar,
+  SidecarComponentEntry,
+  SidecarProjectEntry,
 } from './sidecar.mts'
 export {
   assertSocketFactsSbom,
@@ -20,7 +21,9 @@ export {
 } from './validate-sbom.mts'
 export {
   assertResolvedPathsSidecar,
-  RESOLVED_COMPONENT_FIELDS,
+  REACTOR_ENTRY_FIELDS,
+  SIDECAR_COMPONENT_FIELDS,
+  SIDECAR_PROJECT_FIELDS,
   validateResolvedPathsSidecar,
 } from './validate-sidecar.mts'
 export type { ContractValidation, ContractViolation } from './violations.mts'

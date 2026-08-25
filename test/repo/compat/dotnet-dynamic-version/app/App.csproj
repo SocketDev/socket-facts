@@ -1,0 +1,13 @@
+<!-- The version is READ AT EVALUATION TIME from a file the test generates per
+     run, so it appears in no committed file here. A resolver that parses this
+     csproj instead of running the build cannot know it — nor the version on the
+     ProjectReference edge below, which the csproj does not state at all. -->
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Version>$([System.IO.File]::ReadAllText('$(MSBuildThisFileDirectory)../version.txt'))</Version>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../lib/Lib.csproj" />
+  </ItemGroup>
+</Project>

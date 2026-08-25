@@ -45,6 +45,7 @@ internal static class FactsRunner {
   private sealed class Session(ToolOptions opts, RecordsWriter records) {
     private readonly List<Regex> _includes = ParsePatterns(opts.IncludeConfigs);
     private readonly List<Regex> _excludes = ParsePatterns(opts.ExcludeConfigs);
+    private readonly List<Regex> _excludePaths = ParsePatterns(opts.ExcludePaths);
     private readonly HashSet<string> _scanned = new(StringComparer.Ordinal);
 
     // Restore eligibility per evaluated project, keyed by full path. Decided
@@ -62,7 +63,10 @@ internal static class FactsRunner {
       }
 
       var graphs = EvaluateGraphs(entries);
-      var projectPaths = graphs.ProjectPaths;
+      // A wholly excluded project emits no records at all, matching the JVM
+      // emitters; source-file-level exclusion stays with the reachability
+      // analysis.
+      var projectPaths = graphs.ProjectPaths.Where(p => !IsExcludedPath(p)).ToList();
       if (!opts.NoRestore) {
         // A standalone project restores only if it supports restore; a
         // solution restores if ANY member does (NuGet skips the rest).
@@ -891,6 +895,16 @@ internal static class FactsRunner {
     private bool ConfigMatches(IReadOnlyList<string> names) {
       if (_excludes.Any(p => names.Any(n => p.IsMatch(n)))) return false;
       return _includes.Count == 0 || _includes.Any(p => names.Any(n => p.IsMatch(n)));
+    }
+
+    // Mirrors SocketSupport.isExcludedPath: the root itself is never excluded,
+    // and each pattern already means "this dir OR its subtree".
+    private bool IsExcludedPath(string projectPath) {
+      if (_excludePaths.Count == 0) return false;
+      var rel = Rel(Path.GetDirectoryName(projectPath)!);
+      var c = rel == "." ? "" : rel.Trim('/');
+      if (c.Length == 0) return false;
+      return _excludePaths.Any(p => p.IsMatch(c));
     }
 
     private string Rel(string path) {

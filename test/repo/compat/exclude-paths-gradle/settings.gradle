@@ -1,0 +1,3 @@
+rootProject.name = 'exclude-paths-fixture'
+include 'app'
+include 'legacy'
