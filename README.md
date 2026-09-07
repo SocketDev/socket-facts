@@ -149,6 +149,7 @@ SOCKET_FACTS_REQUIRE_COMPAT=1 pnpm test test/repo/compat
 MIT
 
 <br/>
+
 <div align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/SocketDev/socket-facts/HEAD/assets/fleet/socket-combomark-dark.svg">
