@@ -14,7 +14,11 @@ const RECORDS = [
   'node\tr1\torg.example:lib:jar:2.0.0\torg.example\tlib\t2.0.0\tjar\t\t1',
 ].join('\n')
 
-function minimalSbom(): Record<string, unknown> {
+function minimalSbom(): {
+  components: { id: string; name: string; type: string }[]
+  metadata: { format: string; tool: string; toolVersion: string }
+  schemaVersion?: number
+} {
   return {
     components: [{ id: 'org.example:lib:2.0.0', name: 'lib', type: 'maven' }],
     metadata: {

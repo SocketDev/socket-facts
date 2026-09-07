@@ -27,6 +27,12 @@ afterEach(() => {
 })
 
 describe('findBuildToolBin', () => {
+  it('uses the dotnet binary override', () => {
+    vi.stubEnv('SOCKET_FACTS_DOTNET_BIN', process.execPath)
+    vi.stubEnv('PATH', '')
+    expect(findBuildToolBin('dotnet')).toBe(process.execPath)
+  })
+
   it('ignores an override that points at nothing', () => {
     vi.stubEnv('SOCKET_FACTS_GRADLE_BIN', MISSING_GRADLE)
     expect(findBuildToolBin('gradle')).toBeUndefined()

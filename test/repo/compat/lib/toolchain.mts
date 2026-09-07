@@ -13,12 +13,14 @@ import type { BuildTool } from '../../../../src/run/build-tool.mts'
 export const REQUIRE_COMPAT_ENV_VAR = 'SOCKET_FACTS_REQUIRE_COMPAT'
 
 const BIN_ENV_VAR: Readonly<Record<BuildTool, string>> = Object.freeze({
+  dotnet: 'SOCKET_FACTS_DOTNET_BIN',
   gradle: 'SOCKET_FACTS_GRADLE_BIN',
   maven: 'SOCKET_FACTS_MAVEN_BIN',
   sbt: 'SOCKET_FACTS_SBT_BIN',
 })
 
 const BIN_NAME: Readonly<Record<BuildTool, string>> = Object.freeze({
+  dotnet: 'dotnet',
   gradle: 'gradle',
   maven: 'mvn',
   sbt: 'sbt',
@@ -29,6 +31,7 @@ const BIN_NAME: Readonly<Record<BuildTool, string>> = Object.freeze({
 // extension is a jar that a JDK has to build, which `pnpm run build`
 // deliberately does not do — a plain checkout carries no JDK obligation.
 const ASSET_FIX: Readonly<Record<BuildTool, string>> = Object.freeze({
+  dotnet: 'run `pnpm run build:dotnet-tool` (needs a .NET 8+ SDK)',
   gradle: 'restore the committed emitter source',
   maven: 'run `pnpm run build:maven-extension` (needs a JDK)',
   sbt: 'restore the committed emitter source',
@@ -89,7 +92,7 @@ export function skipReasonFor(tool: BuildTool): string | undefined {
     return (
       `No ${BIN_NAME[tool]} on PATH. ` +
       `Where: the ${tool} dynamic-version conformance fixture. ` +
-      `Saw no executable, wanted a ${tool} install plus a JDK. ` +
+      `Saw no executable, wanted ${tool === 'dotnet' ? 'a .NET 8+ SDK' : `a ${tool} install plus a JDK`}. ` +
       `Fix: install ${tool}, or point ${BIN_ENV_VAR[tool]} at its binary. ` +
       `Set ${REQUIRE_COMPAT_ENV_VAR}=1 to turn this skip into a failure.`
     )

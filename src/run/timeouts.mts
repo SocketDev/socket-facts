@@ -1,11 +1,6 @@
 import process from 'node:process'
 
-// A build that hangs hangs the scan. socket-cli's facts spawn had no ceiling at
-// all, so a wedged daemon or a repository that never answers stalled the whole
-// run with no signal. The ceiling is generous rather than tight: dependency
-// resolution on a large multi-module project legitimately takes minutes, and a
-// premature kill would look exactly like the empty-SBOM failure this package
-// exists to make impossible.
+// Bound dependency resolution time so a stalled build cannot block the scan.
 
 export const FACTS_GENERATION_TIMEOUT_ENV_VAR = 'SOCKET_FACTS_TIMEOUT_MS'
 

@@ -8,10 +8,8 @@ import {
   serializeSidecar,
 } from '../../../src/pipeline/sidecar.mts'
 
-import type {
-  ResolvedArtifactPaths,
-  SocketFactsSbom,
-} from '../../../src/contract/sidecar.mts'
+import type { SocketFactsSbom } from '../../../src/contract/sbom.mts'
+import type { ResolvedArtifactPaths } from '../../../src/contract/sidecar.mts'
 import type { SidecarAccumulator } from '../../../src/pipeline/sidecar.mts'
 
 function emptyArtifactPaths(): ResolvedArtifactPaths {
