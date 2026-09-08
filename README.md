@@ -1,7 +1,7 @@
 # facts
 
 <a href="https://badge.socket.dev/npm/package/@socketsecurity/facts"><img src="https://badge.socket.dev/npm/package/@socketsecurity/facts" alt="Socket Badge" height="20"></a>
-<img src="https://raw.githubusercontent.com/SocketDev/socket-facts/HEAD/assets/repo/coverage.svg?v=be454a27b89a" height="20" alt="Coverage" />
+<picture><img src="https://raw.githubusercontent.com/SocketDev/socket-facts/HEAD/assets/repo/coverage.svg?v=be454a27b89a" height="20" alt="Coverage" /></picture>
 
 [![Follow @SocketSecurity](https://raw.githubusercontent.com/SocketDev/socket-facts/HEAD/assets/fleet/badge-follow-x.svg)](https://twitter.com/SocketSecurity)
 [![Follow @socket.dev on Bluesky](https://raw.githubusercontent.com/SocketDev/socket-facts/HEAD/assets/fleet/badge-follow-bluesky.svg)](https://bsky.app/profile/socket.dev)
