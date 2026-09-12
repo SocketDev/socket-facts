@@ -8,7 +8,7 @@
  *   directory parks in the system temp dir, where the OS reclaims it — no
  *   recursive delete of a path this script assembled.
  *
- *   Usage: pnpm run build:dotnet-tool
+ *   Usage: `pnpm run` build:dotnet-tool
  */
 
 import { existsSync, promises as fs } from 'node:fs'
@@ -20,7 +20,7 @@ import { errorMessage } from '@socketsecurity/lib-stable/errors/message'
 import { getDefaultLogger } from '@socketsecurity/lib-stable/logger/default'
 import { spawn } from '@socketsecurity/lib-stable/process/spawn/child'
 
-import { isMainModule } from '../fleet/_shared/is-main-module.mts'
+import { isMainModule } from '../fleet/process/is-main-module.mts'
 import {
   DOTNET_TOOL_DIR,
   DOTNET_TOOL_DLL,

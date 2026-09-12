@@ -4,7 +4,7 @@
  *   JDK is the only prerequisite. The wrapper runs with the extension directory
  *   as its cwd and finds its own `.mvn/` config by walking up to the repo root.
  *
- *   Usage: pnpm run build:maven-extension
+ *   Usage: `pnpm run` build:maven-extension
  */
 
 import { existsSync, promises as fs } from 'node:fs'
@@ -15,7 +15,7 @@ import { errorMessage } from '@socketsecurity/lib-stable/errors/message'
 import { getDefaultLogger } from '@socketsecurity/lib-stable/logger/default'
 import { spawn } from '@socketsecurity/lib-stable/process/spawn/child'
 
-import { isMainModule } from '../fleet/_shared/is-main-module.mts'
+import { isMainModule } from '../fleet/process/is-main-module.mts'
 import {
   MAVEN_EXTENSION_DIR,
   MAVEN_EXTENSION_JAR,
