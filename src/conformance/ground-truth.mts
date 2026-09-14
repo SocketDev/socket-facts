@@ -1,3 +1,5 @@
+import { parseGradleDependencyLine } from './_internal/gradle-row.mts'
+
 // A build tool's OWN authoritative answer, parsed into the shape the comparer
 // diffs emitted facts against. The question every one of these answers is "did
 // we report what the build actually resolved", which is the only question the
@@ -32,10 +34,6 @@ export function groundTruthKey(group: string, name: string): string {
 // row where the declared selector and the resolved version differ. Rows marked
 // `(*)` are Gradle's "already shown above" elision and carry no new edge; `(n)`
 // means the configuration was not resolved.
-const GRADLE_ROW = /^([| ]*)[\\+]---\s+(.+?)\s*$/
-
-const GRADLE_ELISION = /\s+\((?:\*|c|n)\)$/
-
 export type GradleRow = {
   depth: number
   group: string
@@ -45,13 +43,11 @@ export type GradleRow = {
 }
 
 export function parseGradleDependencyRow(line: string): GradleRow | undefined {
-  const match = GRADLE_ROW.exec(line)
-  if (!match) {
+  const parsedLine = parseGradleDependencyLine(line)
+  if (!parsedLine) {
     return undefined
   }
-  const indent = match[1]!
-  const elided = GRADLE_ELISION.test(match[2]!)
-  let body = match[2]!.replace(GRADLE_ELISION, '').trim()
+  let { body } = parsedLine
   // `selector -> resolved`: the right-hand side is what the build resolved.
   const arrow = body.lastIndexOf(' -> ')
   let resolved: string | undefined
@@ -73,8 +69,8 @@ export function parseGradleDependencyRow(line: string): GradleRow | undefined {
       ? substituted[2]!
       : (resolved ?? parts[2] ?? '')
   return {
-    depth: Math.floor(indent.length / 5),
-    elided,
+    depth: parsedLine.depth,
+    elided: parsedLine.elided,
     group: substituted && substituted.length >= 3 ? substituted[0]! : group,
     name: substituted && substituted.length >= 3 ? substituted[1]! : name,
     version,

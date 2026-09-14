@@ -57,9 +57,32 @@ describe('parseGradleDependencyRow', () => {
     ).toMatchObject({ elided: true, name: 'dup' })
   })
 
+  it.each(['(*)', '(c)', '(n)'])('recognizes the %s elision marker', marker => {
+    expect(
+      parseGradleDependencyRow(`+--- org.example:dup:1.0 ${marker}`),
+    ).toMatchObject({ elided: true, version: '1.0' })
+  })
+
   it('ignores prose lines', () => {
     expect(parseGradleDependencyRow('Root project ‘x’')).toBeUndefined()
     expect(parseGradleDependencyRow('')).toBeUndefined()
+  })
+
+  it('rejects large malformed rows without excessive backtracking', () => {
+    const indent = '|    '.repeat(200_000)
+    const whitespace = ' '.repeat(1_000_000)
+
+    expect(
+      parseGradleDependencyRow(`${indent}not a dependency`),
+    ).toBeUndefined()
+    expect(
+      parseGradleDependencyRow(`${indent}+---${whitespace}`),
+    ).toBeUndefined()
+    const malformedElision = parseGradleDependencyRow(
+      `+--- org.example:module:1.0${whitespace}(x)`,
+    )
+    expect(malformedElision).toMatchObject({ elided: false, name: 'module' })
+    expect(malformedElision?.version.endsWith('(x)')).toBe(true)
   })
 })
 
