@@ -83,7 +83,6 @@ export function globToRegexSource(glob: string): string {
         }
         // Only literal chars and `-` ranges are meaningful; neutralize
         // regex-class tricks (`&` guards Java's `&&` class intersection).
-        // oxlint-disable-next-line socket/prefer-normalize-path -- regex escaping, not a path separator: a backslash inside a glob's class body is doubled so the emitted pattern reads it as a literal
         body = body
           .replace(/\\/g, '\\\\')
           .replace(/\[/g, '\\[')
