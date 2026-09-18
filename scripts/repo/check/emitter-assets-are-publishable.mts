@@ -27,7 +27,7 @@ import process from 'node:process'
 
 import { getDefaultLogger } from '@socketsecurity/lib-stable/logger/default'
 
-import { isMainModule } from '../../fleet/_shared/is-main-module.mts'
+import { isMainModule } from '../../fleet/process/is-main-module.mts'
 import {
   DOTNET_TOOL_DIR,
   DOTNET_TOOL_DLL,

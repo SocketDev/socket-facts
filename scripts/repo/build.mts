@@ -25,7 +25,7 @@ import { errorMessage } from '@socketsecurity/lib-stable/errors/message'
 import { getDefaultLogger } from '@socketsecurity/lib-stable/logger/default'
 import { spawn } from '@socketsecurity/lib-stable/process/spawn/child'
 
-import { isMainModule } from '../fleet/_shared/is-main-module.mts'
+import { isMainModule } from '../fleet/process/is-main-module.mts'
 import { REPO_ROOT } from './paths.mts'
 
 const logger = getDefaultLogger()
@@ -36,7 +36,7 @@ export const DTS_CONFIG_REL_PATH = '.config/repo/tsconfig.dts.json'
 
 export async function runBundle(): Promise<void> {
   await spawn(
-    'node',
+    process.execPath,
     [
       path.join(REPO_ROOT, 'node_modules', 'rolldown', 'bin', 'cli.mjs'),
       '--config',
@@ -48,7 +48,7 @@ export async function runBundle(): Promise<void> {
 
 export async function runDeclarations(): Promise<void> {
   await spawn(
-    'node',
+    process.execPath,
     [
       path.join(REPO_ROOT, 'node_modules', 'typescript', 'bin', 'tsc'),
       '--project',
