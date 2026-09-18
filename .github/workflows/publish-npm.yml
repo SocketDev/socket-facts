@@ -554,7 +554,6 @@ jobs:
         run: node scripts/fleet/npm/native-artifacts.mts
       - name: Scan exact staged bytes
         id: scan
-        continue-on-error: true
         env:
           GITHUB_TOKEN: ${{ github.token }}
           SCAN_PACKAGE: ${{ inputs.scan-package }}

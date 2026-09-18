@@ -1364,8 +1364,10 @@ const ALWAYS_TRACKED_PREFIXES = [
  */
 function isAlwaysTrackedSurface(relPath) {
   const p = relPath.replaceAll('\\', '/')
-  for (let i = 0, { length } = ALWAYS_TRACKED_PREFIXES; i < length; i += 1)
-    if (p.startsWith(ALWAYS_TRACKED_PREFIXES[i])) return true
+  for (let i = 0, { length } = ALWAYS_TRACKED_PREFIXES; i < length; i += 1) {
+    const prefix = ALWAYS_TRACKED_PREFIXES[i]
+    if (prefix.endsWith('/') ? p.startsWith(prefix) : p === prefix) return true
+  }
   return isAlwaysTrackedGitHubSurface(p)
 }
 /**
