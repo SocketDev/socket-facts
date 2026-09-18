@@ -22,11 +22,12 @@ import path from 'node:path'
 import process from 'node:process'
 
 import { errorMessage } from '@socketsecurity/lib-stable/errors/message'
+import { safeDelete } from '@socketsecurity/lib-stable/fs/safe'
 import { getDefaultLogger } from '@socketsecurity/lib-stable/logger/default'
 import { spawn } from '@socketsecurity/lib-stable/process/spawn/child'
 
 import { isMainModule } from '../fleet/process/is-main-module.mts'
-import { REPO_ROOT } from './paths.mts'
+import { PACKAGE_DIST_DIR, REPO_ROOT } from './paths.mts'
 
 const logger = getDefaultLogger()
 
@@ -67,6 +68,7 @@ export async function main(): Promise<void> {
         `Fix: add ${ROLLDOWN_CONFIG_REL_PATH}, or re-run the wheelhouse cascade.`,
     )
   }
+  await safeDelete(PACKAGE_DIST_DIR)
   logger.info('build: bundling src/ to CJS…')
   await runBundle()
   logger.info('build: emitting type declarations…')

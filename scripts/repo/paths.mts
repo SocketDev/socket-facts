@@ -67,3 +67,5 @@ export const DOTNET_TOOL_DLL = path.join(
  * The generation API and the wire contracts.
  */
 export const SRC_DIR = path.join(REPO_ROOT, 'src')
+
+export const PACKAGE_DIST_DIR = path.join(REPO_ROOT, 'dist')

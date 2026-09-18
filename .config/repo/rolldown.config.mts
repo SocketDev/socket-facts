@@ -19,21 +19,18 @@ import path from 'node:path'
 
 import type { RolldownOptions } from 'rolldown'
 
-import { REPO_ROOT } from '../../scripts/fleet/paths.mts'
-
-const srcPath = path.join(REPO_ROOT, 'src')
-const distPath = path.join(REPO_ROOT, 'dist')
+import { PACKAGE_DIST_DIR, SRC_DIR } from '../../scripts/repo/paths.mts'
 
 const config: RolldownOptions = {
   external: [/^@socketsecurity\//, /^node:/],
   input: {
-    assets: path.join(srcPath, 'assets.mts'),
-    conformance: path.join(srcPath, 'conformance', 'index.mts'),
-    contract: path.join(srcPath, 'contract', 'index.mts'),
-    index: path.join(srcPath, 'index.mts'),
+    assets: path.join(SRC_DIR, 'assets.mts'),
+    conformance: path.join(SRC_DIR, 'conformance', 'index.mts'),
+    contract: path.join(SRC_DIR, 'contract', 'index.mts'),
+    index: path.join(SRC_DIR, 'index.mts'),
   },
   output: {
-    dir: distPath,
+    dir: PACKAGE_DIST_DIR,
     entryFileNames: '[name].js',
     format: 'cjs',
     sourcemap: false,

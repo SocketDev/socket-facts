@@ -15,7 +15,10 @@
   "files": [
     "CHANGELOG.md",
     "dist/**/*",
-    "emitters/**/*"
+    "emitters/**/*",
+    "!emitters/**/bin/**",
+    "!emitters/**/obj/**",
+    "!emitters/**/target/**"
   ],
   "sideEffects": false,
   "main": "./dist/index.js",
@@ -207,7 +210,11 @@
     "check:deps": "node scripts/fleet/check.mts --category=deps",
     "check:hooks": "node scripts/fleet/check.mts --category=hooks",
     "check:types": "node scripts/fleet/check.mts --category=types",
-    "npm:trust:browser": "node scripts/fleet/registry-infra/npm/settings/trusted-publisher/browser.mts"
+    "npm:trust:browser": "node scripts/fleet/registry-infra/npm/settings/trusted-publisher/browser.mts",
+    "check:emitters": "node scripts/repo/check/emitter-assets-are-publishable.mts --require-built",
+    "prepack": "pnpm run check:emitters",
+    "prepublish:check": "pnpm run build:maven-extension && pnpm run build:dotnet-tool && pnpm run check:emitters",
+    "build:publish": "pnpm run prepublish:check"
   },
   "dependencies": {
     "@socketsecurity/lib": "catalog:"
