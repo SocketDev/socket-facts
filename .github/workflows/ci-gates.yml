@@ -96,8 +96,8 @@ jobs:
           # empty on a non-thin member (var/secret unset) — the mint is skipped
           # and the fetch no-ops. A thin member sets a dedicated read-only App's
           # SOCKET_PAYLOAD_CLIENT_ID var + SOCKET_PAYLOAD_APP_PRIVATE_KEY secret.
-          payload-token-client-id: ${{ vars.SOCKET_PAYLOAD_CLIENT_ID }}
-          payload-token-private-key: ${{ secrets.SOCKET_PAYLOAD_APP_PRIVATE_KEY }}
+          payload-token-client-id: ${{ secrets.SOCKET_RELEASE_CLIENT_ID || vars.SOCKET_RELEASE_CLIENT_ID }}
+          payload-token-private-key: ${{ secrets.SOCKET_RELEASE_APP_PRIVATE_KEY }}
       - uses: ./.github/actions/fleet/run-script
         with:
           main-script: pnpm run check --all
@@ -145,8 +145,8 @@ jobs:
           # empty on a non-thin member (var/secret unset) — the mint is skipped
           # and the fetch no-ops. A thin member sets a dedicated read-only App's
           # SOCKET_PAYLOAD_CLIENT_ID var + SOCKET_PAYLOAD_APP_PRIVATE_KEY secret.
-          payload-token-client-id: ${{ vars.SOCKET_PAYLOAD_CLIENT_ID }}
-          payload-token-private-key: ${{ secrets.SOCKET_PAYLOAD_APP_PRIVATE_KEY }}
+          payload-token-client-id: ${{ secrets.SOCKET_RELEASE_CLIENT_ID || vars.SOCKET_RELEASE_CLIENT_ID }}
+          payload-token-private-key: ${{ secrets.SOCKET_RELEASE_APP_PRIVATE_KEY }}
       # The SFW proxy interposes crates.io at the system level. Other tools
       # receive its CA via NODE_EXTRA_CA_CERTS; cargo needs CARGO_HTTP_CAINFO
       # explicitly, and on Windows schannel additionally demands revocation

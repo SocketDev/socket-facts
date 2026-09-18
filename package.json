@@ -214,7 +214,13 @@
     "check:emitters": "node scripts/repo/check/emitter-assets-are-publishable.mts --require-built",
     "prepack": "pnpm run check:emitters",
     "prepublish:check": "pnpm run build:maven-extension && pnpm run build:dotnet-tool && pnpm run check:emitters",
-    "build:publish": "pnpm run prepublish:check"
+    "build:publish": "pnpm run prepublish:check",
+    "jev:benchmark": "node scripts/fleet/ai/eval/cli.mts",
+    "jev:events": "node scripts/fleet/ai/balancer/events/cli.mts",
+    "review:comments": "node scripts/fleet/review-comments.mts",
+    "browser:advice": "node scripts/fleet/browser/agent/jev/run.mts",
+    "cover:aggregate": "node scripts/fleet/cover-aggregate.mts",
+    "cover:shard": "node scripts/fleet/cover-shard.mts"
   },
   "dependencies": {
     "@socketsecurity/lib": "catalog:"
