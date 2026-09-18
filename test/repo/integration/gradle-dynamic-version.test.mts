@@ -1,4 +1,3 @@
-// socket-lint: mirror-exempt — a conformance suite over the Gradle EMITTER, not over a TypeScript module; renaming it to run-facts-generation would hide which fixture it drives.
 import { promises as fs } from 'node:fs'
 import path from 'node:path'
 
@@ -10,22 +9,22 @@ import {
   renderConformanceReport,
 } from '../../../src/conformance/compare.mts'
 import { runFactsGeneration } from '../../../src/run/run-facts-generation.mts'
-import { captureGradleGroundTruth } from './lib/capture-ground-truth.mts'
+import { captureGradleGroundTruth } from '../compat/lib/capture-ground-truth.mts'
 import {
   createDynamicVersionWorkspace,
   DYNAMIC_VERSION_CASES,
   FIXTURE_SOURCE_DIR,
-} from './lib/dynamic-version-workspace.mts'
+} from '../compat/lib/dynamic-version-workspace.mts'
 import {
   compatEnv,
   enforceOrAnnounceSkip,
   findBuildToolBin,
   skipReasonFor,
-} from './lib/toolchain.mts'
+} from '../compat/lib/toolchain.mts'
 
-import type { GroundTruthCapture } from './lib/capture-ground-truth.mts'
+import type { GroundTruthCapture } from '../compat/lib/capture-ground-truth.mts'
 import type { FactsGenerationResult } from '../../../src/run/result.mts'
-import type { DynamicVersionWorkspace } from './lib/dynamic-version-workspace.mts'
+import type { DynamicVersionWorkspace } from '../compat/lib/dynamic-version-workspace.mts'
 
 // #1385 reversed a delegation because the delegate re-resolved the build later,
 // against a different resolution, and diverged on dynamically-versioned

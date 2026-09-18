@@ -26,7 +26,10 @@
   },
   "vitest": {
     "lanes": {
-      "slow": ["test/repo/compat"]
+      "slow": [
+        "test/repo/compat",
+        "test/repo/integration/*-dynamic-version.test.mts"
+      ]
     }
   }
 }
