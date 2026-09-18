@@ -2,270 +2,6 @@
   "$schema": "https://raw.githubusercontent.com/SocketDev/socket-wheelhouse/main/scripts/fleet/build-infra/lib/external-tools-schema.json",
   "description": "External tools required to build + release this repo. The canonical schema lives at socket-wheelhouse/scripts/fleet/build-infra/lib/external-tools-schema.json (generated from scripts/fleet/lib/external-tools-schema.mts); every fleet repo references it via the $schema field above so validators pick up the single source of truth. Extend the `tools` map with repo-specific entries (e.g. language toolchains for sdxgen, git credential helpers for packageurl-js).",
   "tools": {
-    "git": {
-      "description": "Git CLI — checkout, submodule init, tag signing.",
-      "version": "2.30+",
-      "notes": [
-        "Required: yes (all platforms)",
-        "Preinstalled on macOS (Xcode CLT) and most Linux distros",
-        "Windows: https://git-scm.com/download/win or via winget/scoop"
-      ],
-      "origin": "system"
-    },
-    "node": {
-      "description": "Node.js — runs the build scripts and TypeScript stripping.",
-      "version": "24+",
-      "notes": [
-        "Required: yes",
-        "Node 24+ runs .mts files with default-on native type stripping; Node 24.12+ marks it stable",
-        "Install via volta / nvm / fnm / official installer",
-        "The pinned version lives in .node-version at the repo root",
-        "Docker prebakes: node-base (docker/fleet/node-base.Dockerfile) builds node from source at the .node-version pin with V8 pointer compression (--experimental-enable-pointer-compression = lower memory), replicating the vendored platformatic/node-caged recipe rather than pulling its DockerHub image. scripts/repo/build-prebakes.mts injects NODE_VERSION (.node-version) + PNPM_VERSION (pnpm pin) as build-args; every compiler-base build COPYs node --from=node-base instead of installing it."
-      ],
-      "origin": "system"
-    },
-    "pnpm": {
-      "notes": [
-        "Eight supported platforms use native binaries from the pnpm v12.4.2 GitHub release, including darwin-x64.",
-        "Linux glibc and musl platforms use distinct assets and integrity values.",
-        "Each platform asset has a verified SHA-512 integrity value.",
-        "The dated soak exception expires on 2026-09-22."
-      ],
-      "description": "Fast, disk space efficient package manager",
-      "repository": "github:pnpm/pnpm",
-      "version": "12.4.2",
-      "platforms": {
-        "darwin-arm64": {
-          "asset": "pnpm-darwin-arm64.tar.gz",
-          "integrity": "sha512-OHNpC2HJAQjV1W3FRo1mGCVSJFap22fg9meUNXlidX8XvvsNuXQY14SVPnngYLgODqhwFg/T4x9QDlfDqwfyLg=="
-        },
-        "darwin-x64": {
-          "asset": "pnpm-darwin-x64.tar.gz",
-          "integrity": "sha512-XUE5mbN1jFDQRYWQNitrDrr+oQDWWBxkp65LIS6+2JK4c7dag9+HZ5c/yqAfIdDeT3mx/zMyraZatjoHKNlqiA=="
-        },
-        "linux-arm64": {
-          "asset": "pnpm-linux-arm64.tar.gz",
-          "integrity": "sha512-TAIJEqjtBBTbeoBBV9xMLBPTfqUO1sQNrD6MWG6T4MoaPDMmf5Ajw9PT3dVb8Mr7I+aQ5pqfohVLjMsNE5Ctxg=="
-        },
-        "linux-arm64-musl": {
-          "asset": "pnpm-linux-arm64-musl.tar.gz",
-          "integrity": "sha512-P5IRV4ZP0msSzsxnTAppD+bMWisy/HnCkzbBTypJFUNVbxrj33WnXjqeNlAfe5EU/AsJ2lSXEGcG0hE9/Zg6iw=="
-        },
-        "linux-x64": {
-          "asset": "pnpm-linux-x64.tar.gz",
-          "integrity": "sha512-CzdNUx27xott5V1wQK6XmiMcTt2NXs3BdMOL71my8j/FF8NRfyM+QCBjXkvb3izCdBf9AFsoQ4wzua4jbfAVzQ=="
-        },
-        "linux-x64-musl": {
-          "asset": "pnpm-linux-x64-musl.tar.gz",
-          "integrity": "sha512-1/WgpsoZJkbUSAWNKwIOIZ7w5yQ+8KOed8vhlQSJ2EgVUqqY0g/WhTlfUWTJp0IOna6nket/0TXJUdlyrW6TQw=="
-        },
-        "win32-arm64": {
-          "asset": "pnpm-win32-arm64.zip",
-          "integrity": "sha512-SYdquF7ZGVX1ztzLpHZNxaOQt/yO8UZaZMvc1loDVNMY5jdvKJbjqNxzJHC4em4K5RNklbEMOmSQdm6sYWsUFQ=="
-        },
-        "win32-x64": {
-          "asset": "pnpm-win32-x64.zip",
-          "integrity": "sha512-/+vikx8ZMcvZT12+KdCAUDi93Urbee75fiUeJxSnowq3QEP6tpU3F9u58+fk9ymd2Y+xI7hKU8NYtJRi7gCx2Q=="
-        }
-      },
-      "origin": "gh-asset",
-      "soakBypass": {
-        "published": "2026-09-15",
-        "removable": "2026-09-22",
-        "version": "12.4.2"
-      }
-    },
-    "gh": {
-      "description": "GitHub CLI — workflow dispatch, release downloads, PR creation in weekly-update; host for the gh-aw agentic-workflows extension.",
-      "version": "2.94.0",
-      "notes": [
-        "Required: only in workflows that call `gh api` / `gh pr create` (weekly-update, provenance)",
-        "Preinstalled on GitHub-hosted runners",
-        "Local: `brew install gh` / `winget install gh` / `apt install gh`",
-        "The gh-aw extension needs gh >= 2.0.0; the pinned version above is the current latest"
-      ],
-      "origin": "system"
-    },
-    "gh-aw": {
-      "description": "GitHub Agentic Workflows — `gh` extension that authors agentic workflows as `.github/workflows/<name>.md` (markdown + frontmatter) and compiles them to a hardened `<name>.lock.yml`. The fleet uses `engine: claude`.",
-      "version": "latest",
-      "repository": "github:github/gh-aw",
-      "notes": [
-        "Required: any repo with a `.github/workflows/*.md` agentic workflow",
-        "Install: `gh extension install github/gh-aw`; init a repo with `gh aw init`; compile after editing frontmatter with `gh aw compile` (commit BOTH the .md and the generated .lock.yml)",
-        "Engine secrets (set per repo, by engine): `ANTHROPIC_API_KEY` (claude), `COPILOT_GITHUB_TOKEN` (copilot — distinct from the default GITHUB_TOKEN; or use `permissions: copilot-requests: write` to bill the org via the Actions token, no PAT), `OPENAI_API_KEY` (codex), `GEMINI_API_KEY` (gemini)",
-        "`copilot-requests: write` is Copilot-engine-only — claude/codex/gemini need no GitHub permission beyond their API key",
-        "Any action a compiled .lock.yml references must be added to the repo's GitHub Actions allowlist (Settings → Actions → Allowed actions)"
-      ],
-      "origin": "system"
-    },
-    "uv": {
-      "notes": [
-        "uv (Astral) — the fleet's Python project tool. Installed in the bootstrap (release-asset, SRI-verified per platform, like janus/codedb) so a hash-locked uv install is available BEFORE the security-tools step that needs it (SkillSpector installs via a uv project + uv.lock, no pipx — the fleet 'uv for projects' rule). external-tools/update.mts re-hashes the GitHub release assets on a bump.",
-        "The GitHub release is a known-publisher binary distribution. The installer uses the version as the release tag."
-      ],
-      "description": "uv — Astral Python package/project manager (pinned, SRI-verified)",
-      "repository": "github:astral-sh/uv",
-      "version": "0.12.15",
-      "versionDate": "2026-09-15",
-      "binaryName": "uv",
-      "platforms": {
-        "darwin-arm64": {
-          "asset": "uv-aarch64-apple-darwin.tar.gz",
-          "integrity": "sha512-y7xj4+kxiyA66dzmrddriihGl077SM74Q2/XwlI4Kw8jO7yh0pOe3IR/YyVyCfCEq0ccpwVLMOgo5YY2BVd0lw=="
-        },
-        "darwin-x64": {
-          "asset": "uv-x86_64-apple-darwin.tar.gz",
-          "integrity": "sha512-r59SZFSWLGcmda5b7rq2yO2sI6SsDKdBE+qvC8KHeoRLV7zCCm1m3s5GwTUCP9O8kx4A7D2GUiV0gPdj2Vkraw=="
-        },
-        "linux-arm64": {
-          "asset": "uv-aarch64-unknown-linux-gnu.tar.gz",
-          "integrity": "sha512-wtjxaDy/A91/eSUbn927LdJEsQy9JRpFfmaXqOxiSafoi+wHEFaNWvjxOpqwoMAky7UrBd0icT6PCttBpagKvA=="
-        },
-        "linux-x64": {
-          "asset": "uv-x86_64-unknown-linux-gnu.tar.gz",
-          "integrity": "sha512-HnyqtvfbH/vq3MTydIYAbCr6hS8kC8kuZpXxrGJ/Nr2dac/wJQA3Z6S9bx95TYCTBdOZ1kPbDjtrzfIgwi4xDw=="
-        },
-        "win32-arm64": {
-          "asset": "uv-aarch64-pc-windows-msvc.zip",
-          "integrity": "sha512-+YD0ZEuCcztbfQcd+rCkRgP4YcUXzZIxyDOcYJzya2Bm16z42RVq5/9sPS8rcNmXf9m7B8ZK08CVLzTXAqGitA=="
-        },
-        "win32-x64": {
-          "asset": "uv-x86_64-pc-windows-msvc.zip",
-          "integrity": "sha512-sSjnNsmzOB+6d6yvegbwumNJhOSsdEM8ZT8qxnDoUpp4CLym3t00OrImSCCW8dyqh6IUPs6uB7NKY+F1A4D3dQ=="
-        }
-      },
-      "origin": "gh-asset",
-      "soakBypass": {
-        "published": "2026-09-15",
-        "removable": "2026-09-22",
-        "version": "0.12.15"
-      }
-    },
-    "zizmor": {
-      "description": "GitHub Actions security linter — audits .github/ for workflow-injection / credential-leak patterns.",
-      "version": "1.30.1",
-      "repository": "github:zizmorcore/zizmor",
-      "notes": [
-        "Required: CI (blocks merges on medium+ findings)",
-        "Installed by the setup-and-install composite; SRI-verified (sha512) per platform"
-      ],
-      "platforms": {
-        "darwin-arm64": {
-          "asset": "zizmor-aarch64-apple-darwin.tar.gz",
-          "integrity": "sha512-0SJEhWNir4QzfGwrT2oX4w/4UJZp8CqDo2RK2bkcfHCilayAZkpvu/fq6rHo+X+gbJICazQBNRE2bo91mmNAKA=="
-        },
-        "darwin-x64": {
-          "asset": "zizmor-x86_64-apple-darwin.tar.gz",
-          "integrity": "sha512-QqPld71wwABqcLyxkJ02nItUczTQrtpAAT6xiDvyyBySuywAFGW4mUU7iO2Kcwg+CDY5ZLvkd/vNm76GqqbwXw=="
-        },
-        "linux-arm64": {
-          "asset": "zizmor-aarch64-unknown-linux-gnu.tar.gz",
-          "integrity": "sha512-7AfMKqT+4SoyYRE4Ke7Ar5H+1SoU7QUuifuSKGjJIb7Qep29+oP0IrMsEMwjqAxpiGbEPyxSMgO7ghDlHhNsNQ=="
-        },
-        "linux-x64": {
-          "asset": "zizmor-x86_64-unknown-linux-gnu.tar.gz",
-          "integrity": "sha512-sMHocgA1Rg12S12/szGaRumgmlAEjaeU5EIdGTczLNldhGFptlctCFqogoebWvE/PFioGlZ2vcSxoCZW3BegYg=="
-        },
-        "win32-x64": {
-          "asset": "zizmor-x86_64-pc-windows-msvc.zip",
-          "integrity": "sha512-cYagZJ5fG+8UQ/Fr0LshEt7A6CXQgWeeBHlsztvzCepX661rrW9h3h//hedNUu7yM215f+fqDXE0++6MjuLgJg=="
-        }
-      },
-      "origin": "gh-asset"
-    },
-    "sfw-free": {
-      "notes": [
-        "SFW (Socket Firewall) free flavor (public, SocketDev/sfw-free). Ships a 7-platform set: linux-{x64,arm64}{,-musl}, darwin-{x64,arm64}, win-x64. Windows 11 ARM64 setup uses the verified win32-x64 asset through x64 emulation when a native asset is unavailable. SFW remains mandatory and must execute successfully before installation continues.",
-        "Installed when neither SOCKET_API_KEY nor SOCKET_API_TOKEN is set; the enterprise flavor (sfw-enterprise) is selected when one of those is present. The two flavors share a version and install to the same `sfw` binary name."
-      ],
-      "description": "Socket Firewall (free tier) — package manager command wrapper",
-      "version": "1.15.2",
-      "repository": "github:SocketDev/sfw-free",
-      "binaryName": "sfw",
-      "platforms": {
-        "darwin-arm64": {
-          "asset": "sfw-free-macos-arm64",
-          "integrity": "sha512-pimnuYldUXHrc4j6ZO501ibgo8oIyEsgHDHeQhih8huJEttEB29HPCO7Lk/+2MAF7Sv37mOkiQjYI3OU91Db6Q=="
-        },
-        "darwin-x64": {
-          "asset": "sfw-free-macos-x86_64",
-          "integrity": "sha512-EjBRxWgrdITmVg5ZLvjjnZ5vDCKSBNqTLPOuDjYeHdjXf+BkYs+SGfH/z6lsMUumiDqj/kTtvbRMXoKDMY4x+w=="
-        },
-        "linux-arm64": {
-          "asset": "sfw-free-linux-arm64",
-          "integrity": "sha512-PttVwERdz6OGIhBKbpKklnZC8/cdfpeFxrcDETS1G38+taDqpWYV8Hg12Gh9LDdHsJfrksrdjnPa/tfHaTE5lw=="
-        },
-        "linux-arm64-musl": {
-          "asset": "sfw-free-musl-linux-arm64",
-          "integrity": "sha512-motTFDIZGBRcTomoeIbpcFsy2DFknnzZxTaHDZrRQcF42UoUjeXiJieH1mALF7H/zCsc0hFajohmLlvxsUO1sQ=="
-        },
-        "linux-x64": {
-          "asset": "sfw-free-linux-x86_64",
-          "integrity": "sha512-oHiRTl9O8kdHINEGWjqocj/gz70fPVzVVeS35PwraK7lzHSO4I3++CtUni0NsRvLhIxSZqD3A/xmKzvkgYXDJQ=="
-        },
-        "linux-x64-musl": {
-          "asset": "sfw-free-musl-linux-x86_64",
-          "integrity": "sha512-CLmE1J6q1BCHu1QKge+zJda3iXkKuFE8+3ITW7++iUJxVTbcMRCxdB2EqYnUpLQG1MM4pbQxgQ7Dq7OozBQjAw=="
-        },
-        "win32-x64": {
-          "asset": "sfw-free-windows-x86_64.exe",
-          "integrity": "sha512-vPOL88R3H75j0rHg6lRv53rwtRxFxDo7rzjXU0rWWPDY1U1e3hQzAmvsloS19uo6noWeCXIBJ8ZAbZxQf7EFxA=="
-        }
-      },
-      "origin": "gh-asset",
-      "soakBypass": {
-        "published": "2026-09-15",
-        "removable": "2026-09-22",
-        "version": "1.15.2"
-      }
-    },
-    "sfw-enterprise": {
-      "notes": [
-        "SFW (Socket Firewall) enterprise flavor (private, SocketDev/firewall-release). Same 7-platform set as sfw-free. Enterprise downloads require GITHUB_TOKEN auth (private repo); install-tool.mjs forwards GITHUB_TOKEN automatically when set.",
-        "Installed when SOCKET_API_KEY (or SOCKET_API_TOKEN) is set; otherwise the free flavor (sfw-free) is used. The two flavors share a version and install to the same `sfw` binary name."
-      ],
-      "description": "Socket Firewall (enterprise tier) — package manager command wrapper",
-      "version": "1.15.2",
-      "repository": "github:SocketDev/firewall-release",
-      "binaryName": "sfw",
-      "platforms": {
-        "darwin-arm64": {
-          "asset": "sfw-macos-arm64",
-          "integrity": "sha512-dkETkXxmdVqA/NhV2Pp+754e8t65WHx2x+LE+D4dbX11QhNRAV4pfH2NxKCV3J9YXgzg8MwdLTB9pu6gxfX/7g=="
-        },
-        "darwin-x64": {
-          "asset": "sfw-macos-x86_64",
-          "integrity": "sha512-SCDBU28Eq/1plsmUBhzdf1GLtaYlwHvgMe3ytawP0TkZNi1TcaiUQvZR8mOypej6Q10b/yjeUSAyCUUujrK/fg=="
-        },
-        "linux-arm64": {
-          "asset": "sfw-linux-arm64",
-          "integrity": "sha512-voSGk2iyayKn5MtfjJzipZSj2EBIQNaHRj2GyShpTbPtNYb4KCfXU9Xjk3h7ySN8buUNdGWkwbbF6bewuOr+vg=="
-        },
-        "linux-arm64-musl": {
-          "asset": "sfw-musl-linux-arm64",
-          "integrity": "sha512-XwqBwq3VFRLASFWu6gVHZTnI23uPAig9bFVCS7rXQe5ykog8a0aLnQG834P+owIR7T8YgSsTTFZh4d6joyWZJg=="
-        },
-        "linux-x64": {
-          "asset": "sfw-linux-x86_64",
-          "integrity": "sha512-p+hVx3A51RdMjkUsNlE6Hor6fnwBBEczorwL2ee6xGWfu0Q7Ok8POIIhX+kFPGnSDmytpNaTYkioLVFP+Hn9Og=="
-        },
-        "linux-x64-musl": {
-          "asset": "sfw-musl-linux-x86_64",
-          "integrity": "sha512-6Ylukj7jrw6zGxpiqMJRH8Q9n6RDjd84DCXArd9ZahaPoSVvWnJ56nZOzPM3G8uwG5Htn/0s+hj1J6K3FKKNQg=="
-        },
-        "win32-x64": {
-          "asset": "sfw-windows-x86_64.exe",
-          "integrity": "sha512-xXhch+OLtqYjatxThlqOv+HY2ooSoyA0B/hujjjSLyQ7xz8LLcJtc+Db0iBB/2mOKYc4KqQT4ukeTtxz3g0+xQ=="
-        }
-      },
-      "origin": "gh-asset",
-      "soakBypass": {
-        "published": "2026-09-15",
-        "removable": "2026-09-22",
-        "version": "1.15.2"
-      }
-    },
     "cargo-hawk": {
       "version": "0.1.12",
       "repository": "github:astral-sh/hawk",
@@ -287,9 +23,43 @@
           "integrity": "sha512-tgyGpCueub378mHESiGlBXYXyzd1A9O5MdrvRDh1mu1ZLs93h6AEoOM+y0WZMdgFA7AkM37iSKKcPvOP16GwEg=="
         }
       },
-      "description": "cargo-hawk (Astral) — workspace-aware Cargo lint for unnecessary/over-broad Rust visibility. Rust fleet members only (consumed by setup:rust).",
+      "description": "cargo-hawk (Astral) \u2014 workspace-aware Cargo lint for unnecessary/over-broad Rust visibility. Rust fleet members only (consumed by setup:rust).",
       "binaryName": "cargo-hawk",
       "origin": "gh-asset"
+    },
+    "gh": {
+      "description": "GitHub CLI \u2014 workflow dispatch, release downloads, PR creation in weekly-update; host for the gh-aw agentic-workflows extension.",
+      "version": "2.94.0",
+      "notes": [
+        "Required: only in workflows that call `gh api` / `gh pr create` (weekly-update, provenance)",
+        "Preinstalled on GitHub-hosted runners",
+        "Local: `brew install gh` / `winget install gh` / `apt install gh`",
+        "The gh-aw extension needs gh >= 2.0.0; the pinned version above is the current latest"
+      ],
+      "origin": "system"
+    },
+    "gh-aw": {
+      "description": "GitHub Agentic Workflows \u2014 `gh` extension that authors agentic workflows as `.github/workflows/<name>.md` (markdown + frontmatter) and compiles them to a hardened `<name>.lock.yml`. The fleet uses `engine: claude`.",
+      "version": "latest",
+      "repository": "github:github/gh-aw",
+      "notes": [
+        "Required: any repo with a `.github/workflows/*.md` agentic workflow",
+        "Install: `gh extension install github/gh-aw`; init a repo with `gh aw init`; compile after editing frontmatter with `gh aw compile` (commit BOTH the .md and the generated .lock.yml)",
+        "Engine secrets (set per repo, by engine): `ANTHROPIC_API_KEY` (claude), `COPILOT_GITHUB_TOKEN` (copilot \u2014 distinct from the default GITHUB_TOKEN; or use `permissions: copilot-requests: write` to bill the org via the Actions token, no PAT), `OPENAI_API_KEY` (codex), `GEMINI_API_KEY` (gemini)",
+        "`copilot-requests: write` is Copilot-engine-only \u2014 claude/codex/gemini need no GitHub permission beyond their API key",
+        "Any action a compiled .lock.yml references must be added to the repo's GitHub Actions allowlist (Settings \u2192 Actions \u2192 Allowed actions)"
+      ],
+      "origin": "system"
+    },
+    "git": {
+      "description": "Git CLI \u2014 checkout, submodule init, tag signing.",
+      "version": "2.30+",
+      "notes": [
+        "Required: yes (all platforms)",
+        "Preinstalled on macOS (Xcode CLT) and most Linux distros",
+        "Windows: https://git-scm.com/download/win or via winget/scoop"
+      ],
+      "origin": "system"
     },
     "kani": {
       "version": "0.67.0",
@@ -312,9 +82,21 @@
           "integrity": "sha512-tknX55aOrK9mBR824n5ae02qY7zpE/1PJN7LWdmvmw5xzkyvyl6+j0Wbk7iTfmmuePzy7ZIs7q3xBaUTY9Izdg=="
         }
       },
-      "description": "Kani bounded model checker for Rust — proves panic/overflow/UB-freedom on decoder paths",
+      "description": "Kani bounded model checker for Rust \u2014 proves panic/overflow/UB-freedom on decoder paths",
       "binaryName": "cargo-kani",
       "origin": "gh-asset"
+    },
+    "node": {
+      "description": "Node.js \u2014 runs the build scripts and TypeScript stripping.",
+      "version": "24+",
+      "notes": [
+        "Required: yes",
+        "Node 24+ runs .mts files with default-on native type stripping; Node 24.12+ marks it stable",
+        "Install via volta / nvm / fnm / official installer",
+        "The pinned version lives in .node-version at the repo root",
+        "Docker prebakes: node-base (docker/fleet/node-base.Dockerfile) builds node from source at the .node-version pin with V8 pointer compression (--experimental-enable-pointer-compression = lower memory), replicating the vendored platformatic/node-caged recipe rather than pulling its DockerHub image. scripts/repo/build-prebakes.mts injects NODE_VERSION (.node-version) + PNPM_VERSION (pnpm pin) as build-args; every compiler-base build COPYs node --from=node-base instead of installing it."
+      ],
+      "origin": "system"
     }
   }
 }
