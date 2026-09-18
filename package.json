@@ -212,7 +212,7 @@
     "check:types": "node scripts/fleet/check.mts --category=types",
     "npm:trust:browser": "node scripts/fleet/registry-infra/npm/settings/trusted-publisher/browser.mts",
     "check:emitters": "node scripts/repo/check/emitter-assets-are-publishable.mts --require-built",
-    "prepack": "pnpm run check:emitters",
+    "prepack": "pnpm run prepublish:check",
     "prepublish:check": "pnpm run build:maven-extension && pnpm run build:dotnet-tool && pnpm run check:emitters",
     "build:publish": "pnpm run prepublish:check",
     "jev:benchmark": "node scripts/fleet/ai/eval/cli.mts",

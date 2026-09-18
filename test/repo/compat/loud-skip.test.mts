@@ -17,7 +17,7 @@ import {
 // to prevent. These tests hold the skip path to the same standard as the
 // assertions it guards.
 
-const MISSING_GRADLE = '/socket-facts/definitely/not/a/gradle'
+const MISSING_GRADLE = '/socket-facts/missing/gradle'
 
 const MISSING_ASSET = '/socket-facts/definitely/not/an/emitter-asset'
 

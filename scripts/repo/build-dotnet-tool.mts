@@ -21,13 +21,13 @@ import { getDefaultLogger } from '@socketsecurity/lib-stable/logger/default'
 import { spawn } from '@socketsecurity/lib-stable/process/spawn/child'
 
 import { isMainModule } from '../fleet/process/is-main-module.mts'
+import { strictDelete } from '../fleet/fs/strict.mts'
 import {
   DOTNET_TOOL_DIR,
   DOTNET_TOOL_DLL,
   DOTNET_TOOL_PROJECT,
   DOTNET_TOOL_PUBLISH_DIR,
 } from './paths.mts'
-import { safeDelete } from '@socketsecurity/lib-stable/fs/safe'
 
 const logger = getDefaultLogger()
 
@@ -63,7 +63,7 @@ export async function placePublishOutput(stagingDir: string): Promise<void> {
   const entries = await fs.readdir(stagingDir)
   for (const entry of entries) {
     if (entry.endsWith('.pdb')) {
-      await safeDelete(path.join(stagingDir, entry))
+      await strictDelete(path.join(stagingDir, entry), { base: stagingDir })
     }
   }
   if (existsSync(DOTNET_TOOL_PUBLISH_DIR)) {

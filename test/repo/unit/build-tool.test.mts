@@ -31,8 +31,8 @@ describe('build-tool knowledge', () => {
     expect(buildToolWrapperPath('gradle', '/repo')).toBe(
       path.resolve('/repo', 'gradlew'),
     )
-    expect(buildToolWrapperPath('gradle', '/definitely/not/a/real/dir')).toBe(
-      path.resolve('/definitely/not/a/real/dir', 'gradlew'),
+    expect(buildToolWrapperPath('gradle', '/missing/example-project')).toBe(
+      path.resolve('/missing/example-project', 'gradlew'),
     )
     expect(buildToolWrapperPath('sbt', '/repo')).toBeUndefined()
   })
