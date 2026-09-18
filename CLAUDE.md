@@ -164,23 +164,23 @@
   `runFactsGeneration` takes an absolute `bin`, an explicit `opts` array, an
   explicit `env`, and an explicit `cwd`, and throws when any of them is missing.
   No `socket.json` read, no PATH lookup, no defaulted binary.
-  [`trust-boundary`](docs/agents.md/repo/trust-boundary.md)
+  [`trust-boundary`](docs/repo/agents.md/trust-boundary.md)
 - 🚨 Resolution happens ONCE, at scan time, against the developer's real build -
   a resolver that reads a cache or parses a manifest statically diverges on a
   dynamically-versioned project. The dynamic-version conformance fixture is the
   regression test for that, and it skips loudly rather than passing when no JDK
-  or build tool is present. [`resolve-once`](docs/agents.md/repo/resolve-once.md)
+  or build tool is present. [`resolve-once`](docs/repo/agents.md/resolve-once.md)
 - 🚨 `src/contract/` is a wire format a second implementation parses with a
   `.strict()` schema, so an additive field is a coordinated release, never a
-  local edit. [`contract`](docs/agents.md/repo/contract.md)
+  local edit. [`contract`](docs/repo/agents.md/contract.md)
 - 🚨 The sidecar's `classifier` serializes as an explicit JSON `null`; the fleet's
   `undefined`-over-`null` preference stops at the wire.
-  [`contract`](docs/agents.md/repo/contract.md)
-- 🚨 The conformance oracle diffs emitted facts against the BUILD's own report, never a golden file. [`ground-truth-oracle`](docs/agents.md/repo/ground-truth-oracle.md)
-- 🚨 Only `extra` is tolerated in that diff; `missing`, `version-mismatch`, and a missing edge never are. [`ground-truth-oracle`](docs/agents.md/repo/ground-truth-oracle.md)
-- 🚨 No static fallback, anywhere - a build tool that cannot run is a LOUD failure. [`ground-truth-oracle`](docs/agents.md/repo/ground-truth-oracle.md)
-- 🚨 The dependency runs sdxgen → facts, never the reverse. [`ground-truth-oracle`](docs/agents.md/repo/ground-truth-oracle.md)
-- Keep component identity purl-shaped and the edge list `id`-addressable; the CycloneDX converter is sdxgen's. [`ground-truth-oracle`](docs/agents.md/repo/ground-truth-oracle.md)
+  [`contract`](docs/repo/agents.md/contract.md)
+- 🚨 The conformance oracle diffs emitted facts against the BUILD's own report, never a golden file. [`ground-truth-oracle`](docs/repo/agents.md/ground-truth-oracle.md)
+- 🚨 Only `extra` is tolerated in that diff; `missing`, `version-mismatch`, and a missing edge never are. [`ground-truth-oracle`](docs/repo/agents.md/ground-truth-oracle.md)
+- 🚨 No static fallback, anywhere - a build tool that cannot run is a LOUD failure. [`ground-truth-oracle`](docs/repo/agents.md/ground-truth-oracle.md)
+- 🚨 The dependency runs sdxgen → facts, never the reverse. [`ground-truth-oracle`](docs/repo/agents.md/ground-truth-oracle.md)
+- Keep component identity purl-shaped and the edge list `id`-addressable; the CycloneDX converter is sdxgen's. [`ground-truth-oracle`](docs/repo/agents.md/ground-truth-oracle.md)
 - 🚨 A published install missing `emitters/maven-extension/socket-facts-maven-extension.jar`
   throws - Maven with no extension emits an empty SBOM, which reads as "no
   dependencies" rather than as a failure. (`scripts/repo/check/emitter-assets-are-publishable.mts`)
