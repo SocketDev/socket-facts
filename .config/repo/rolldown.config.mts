@@ -22,6 +22,7 @@ import type { RolldownOptions } from 'rolldown'
 import { PACKAGE_DIST_DIR, SRC_DIR } from '../../scripts/repo/paths.mts'
 
 const config: RolldownOptions = {
+  experimental: { attachDebugInfo: 'none' },
   external: [/^@socketsecurity\//, /^node:/],
   input: {
     assets: path.join(SRC_DIR, 'assets.mts'),
