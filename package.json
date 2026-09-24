@@ -261,6 +261,7 @@
     "@ultrathink/acorn.rs.wasm": "catalog:",
     "@vitest/coverage-v8": "catalog:",
     "@vitest/ui": "catalog:",
+    "@vitiate/core": "catalog:",
     "ast-v8-to-istanbul": "catalog:",
     "ata-validator": "catalog:",
     "c8": "catalog:",
