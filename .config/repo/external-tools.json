@@ -3,32 +3,33 @@
   "description": "External tools required to build + release this repo. The canonical schema lives at socket-wheelhouse/scripts/fleet/build-infra/lib/external-tools-schema.json (generated from scripts/fleet/lib/external-tools-schema.mts); every fleet repo references it via the $schema field above so validators pick up the single source of truth. Extend the `tools` map with repo-specific entries (e.g. language toolchains for sdxgen, git credential helpers for packageurl-js).",
   "tools": {
     "cargo-hawk": {
-      "version": "0.1.12",
+      "version": "0.1.14",
       "repository": "github:astral-sh/hawk",
+      "tag": "0.1.14",
       "platforms": {
         "darwin-arm64": {
           "asset": "cargo-hawk-aarch64-apple-darwin.tar.gz",
-          "integrity": "sha512-3WVTAWizNYNwPtBLzcC2fLzJdx3pzR2u00SVobdUjqw72S1j/qBPh1EM8NXxL4+eAPz/HGngnHcd8aDlubYDWw=="
+          "integrity": "sha512-+OdUQqLfbwMBzM6JANlWgx4V5ZgIuPWfpxYeYp41cmx3OBZONLY/t6ALM64Jo8KY1Rel6VRxP/hQDMqB8OKfqA=="
         },
         "darwin-x64": {
           "asset": "cargo-hawk-x86_64-apple-darwin.tar.gz",
-          "integrity": "sha512-rlRa7xGow1hcR+eayO4qdxyQXIMIYFH8ZgLCJtaAvE6+f7/Mqk1eqHuLilJUORpKJZGwmDN8TnJfQqW3bYeEvw=="
+          "integrity": "sha512-uWSuHRZBoyaY/WuWNvGRWB0Xis4zhT0n8om5jIcnmxnACUSk3odzOHdFVq+Mt4lAHOz2X36v0inwuQN2U6qtOQ=="
         },
         "linux-arm64": {
           "asset": "cargo-hawk-aarch64-unknown-linux-gnu.tar.gz",
-          "integrity": "sha512-Q/ZMjNhWku5nA/dyHh9N7idS4La4xSqQRuV2qIDbZbDXTVowTleCkKTxWaTsPIbqa0rnVanhWU4rQU5kAVB6gw=="
+          "integrity": "sha512-qOYrKVQrxgBC+HTGI8oom6y4vG2vxO1Ly5cVjhWdha7BZBPeR64t2lOKRf3VrTxblQMsV2IBQZbVEP2wpXenbg=="
         },
         "linux-x64": {
           "asset": "cargo-hawk-x86_64-unknown-linux-gnu.tar.gz",
-          "integrity": "sha512-tgyGpCueub378mHESiGlBXYXyzd1A9O5MdrvRDh1mu1ZLs93h6AEoOM+y0WZMdgFA7AkM37iSKKcPvOP16GwEg=="
+          "integrity": "sha512-OZMhJEUFhdZ3CRT//xD2DAS9Jve5m90WcQoHa4oQS+y8f7Jn7OWSDmPGwzawj8iMBC4TvszzgLlvupbiG6UF3g=="
         }
       },
-      "description": "cargo-hawk (Astral) \u2014 workspace-aware Cargo lint for unnecessary/over-broad Rust visibility. Rust fleet members only (consumed by setup:rust).",
+      "description": "cargo-hawk (Astral) — workspace-aware Cargo lint for unnecessary/over-broad Rust visibility. Rust fleet members only (consumed by setup:rust).",
       "binaryName": "cargo-hawk",
       "origin": "gh-asset"
     },
     "gh": {
-      "description": "GitHub CLI \u2014 workflow dispatch, release downloads, PR creation in weekly-update; host for the gh-aw agentic-workflows extension.",
+      "description": "GitHub CLI — workflow dispatch, release downloads, PR creation in weekly-update; host for the gh-aw agentic-workflows extension.",
       "version": "2.94.0",
       "notes": [
         "Required: only in workflows that call `gh api` / `gh pr create` (weekly-update, provenance)",
@@ -39,20 +40,20 @@
       "origin": "system"
     },
     "gh-aw": {
-      "description": "GitHub Agentic Workflows \u2014 `gh` extension that authors agentic workflows as `.github/workflows/<name>.md` (markdown + frontmatter) and compiles them to a hardened `<name>.lock.yml`. The fleet uses `engine: claude`.",
+      "description": "GitHub Agentic Workflows — `gh` extension that authors agentic workflows as `.github/workflows/<name>.md` (markdown + frontmatter) and compiles them to a hardened `<name>.lock.yml`. The fleet uses `engine: claude`.",
       "version": "latest",
       "repository": "github:github/gh-aw",
       "notes": [
         "Required: any repo with a `.github/workflows/*.md` agentic workflow",
         "Install: `gh extension install github/gh-aw`; init a repo with `gh aw init`; compile after editing frontmatter with `gh aw compile` (commit BOTH the .md and the generated .lock.yml)",
-        "Engine secrets (set per repo, by engine): `ANTHROPIC_API_KEY` (claude), `COPILOT_GITHUB_TOKEN` (copilot \u2014 distinct from the default GITHUB_TOKEN; or use `permissions: copilot-requests: write` to bill the org via the Actions token, no PAT), `OPENAI_API_KEY` (codex), `GEMINI_API_KEY` (gemini)",
-        "`copilot-requests: write` is Copilot-engine-only \u2014 claude/codex/gemini need no GitHub permission beyond their API key",
-        "Any action a compiled .lock.yml references must be added to the repo's GitHub Actions allowlist (Settings \u2192 Actions \u2192 Allowed actions)"
+        "Engine secrets (set per repo, by engine): `ANTHROPIC_API_KEY` (claude), `COPILOT_GITHUB_TOKEN` (copilot — distinct from the default GITHUB_TOKEN; or use `permissions: copilot-requests: write` to bill the org via the Actions token, no PAT), `OPENAI_API_KEY` (codex), `GEMINI_API_KEY` (gemini)",
+        "`copilot-requests: write` is Copilot-engine-only — claude/codex/gemini need no GitHub permission beyond their API key",
+        "Any action a compiled .lock.yml references must be added to the repo's GitHub Actions allowlist (Settings → Actions → Allowed actions)"
       ],
       "origin": "system"
     },
     "git": {
-      "description": "Git CLI \u2014 checkout, submodule init, tag signing.",
+      "description": "Git CLI — checkout, submodule init, tag signing.",
       "version": "2.30+",
       "notes": [
         "Required: yes (all platforms)",
@@ -62,32 +63,33 @@
       "origin": "system"
     },
     "kani": {
-      "version": "0.67.0",
+      "version": "0.68.0",
       "repository": "github:model-checking/kani",
+      "tag": "kani-0.68.0",
       "platforms": {
         "darwin-arm64": {
-          "asset": "kani-0.67.0-aarch64-apple-darwin.tar.gz",
-          "integrity": "sha512-IdEGa3o8F06yo3RkZ11x6V/Qeq1tY4zi2A7A3XT9p0HI68gvT2irtJuYIQsKFJJ8jLGvP9PpEEF/erbaOPdBng=="
+          "asset": "kani-0.68.0-aarch64-apple-darwin.tar.gz",
+          "integrity": "sha512-bZJgZS1d7QZ84tqbXvOT8iSiFPqLTYFAI4EFH6Z8bF+Gb/k6mCR5qINfJeLzRwpDJX4BqOw3wcMSZ72x7PhH+Q=="
         },
         "darwin-x64": {
-          "asset": "kani-0.67.0-x86_64-apple-darwin.tar.gz",
-          "integrity": "sha512-V0OSMr1wNKRIGge+iG4fJf3XnvQx44m0xCOPTAKIG3T/vCpI15ytEkWzZbo2Zraopl2uAr21J3ToK/5nhNlWZw=="
+          "asset": "kani-0.68.0-x86_64-apple-darwin.tar.gz",
+          "integrity": "sha512-5XEh+NsDB8mQmFQf1eNy99DG9j3I1g+DES4K8VreX6ICUNfr5Opjxq1bWZQ4mVdiGYsgFmVzR4D6a2ClgqShHA=="
         },
         "linux-arm64": {
-          "asset": "kani-0.67.0-aarch64-unknown-linux-gnu.tar.gz",
-          "integrity": "sha512-Nrlfnct5dPkS2iP9JPESjxghblPb2M7a4lw83UfkWSFeDVE2tR4ZAgrrZEUMFvQAAZOypovug67TFHw2KkVrLw=="
+          "asset": "kani-0.68.0-aarch64-unknown-linux-gnu.tar.gz",
+          "integrity": "sha512-litNlkvj7rNkCTN5V5BNcmPj+m01Z8tJCSQ4Er86oBZ8JFbmq1azabZ6TCtAJg+iSijA0WAqmrkNq82SkZHeYw=="
         },
         "linux-x64": {
-          "asset": "kani-0.67.0-x86_64-unknown-linux-gnu.tar.gz",
-          "integrity": "sha512-tknX55aOrK9mBR824n5ae02qY7zpE/1PJN7LWdmvmw5xzkyvyl6+j0Wbk7iTfmmuePzy7ZIs7q3xBaUTY9Izdg=="
+          "asset": "kani-0.68.0-x86_64-unknown-linux-gnu.tar.gz",
+          "integrity": "sha512-6ytLB+T/C3ulWH+39IbMIqJxXuqDPh5kZw0/IwJrGuqbk5Z4REeSzUo9eP03T/cf56UvgCJ6fXmgBz1JWb19hg=="
         }
       },
-      "description": "Kani bounded model checker for Rust \u2014 proves panic/overflow/UB-freedom on decoder paths",
+      "description": "Kani bounded model checker for Rust — proves panic/overflow/UB-freedom on decoder paths",
       "binaryName": "cargo-kani",
       "origin": "gh-asset"
     },
     "node": {
-      "description": "Node.js \u2014 runs the build scripts and TypeScript stripping.",
+      "description": "Node.js — runs the build scripts and TypeScript stripping.",
       "version": "24+",
       "notes": [
         "Required: yes",
