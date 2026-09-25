@@ -9,13 +9,12 @@
 
 import { existsSync, promises as fs } from 'node:fs'
 import path from 'node:path'
-import process from 'node:process'
-
-import { errorMessage } from '@socketsecurity/lib-stable/errors/message'
 import { getDefaultLogger } from '@socketsecurity/lib-stable/logger/default'
 import { spawn } from '@socketsecurity/lib-stable/process/spawn/child'
 
 import { isMainModule } from '../fleet/process/is-main-module.mts'
+import { runMain } from '../fleet/process/main/run.mts'
+import type { ScriptMeta } from '../fleet/process/main/run.mts'
 import {
   MAVEN_EXTENSION_DIR,
   MAVEN_EXTENSION_JAR,
@@ -23,6 +22,12 @@ import {
 } from './paths.mts'
 
 const logger = getDefaultLogger()
+
+export const SCRIPT_META: ScriptMeta = {
+  describe: 'Build the Maven facts emitter for the npm package.',
+  help: 'Usage: pnpm run build:maven-extension',
+  json: 'result',
+}
 
 export const SHADED_JAR = path.join(
   MAVEN_EXTENSION_DIR,
@@ -57,11 +62,5 @@ export async function main(): Promise<void> {
 }
 
 if (isMainModule(import.meta.url)) {
-  main().then(
-    () => process.exit(0),
-    (error: unknown) => {
-      logger.error(errorMessage(error))
-      process.exit(1)
-    },
-  )
+  runMain(main, SCRIPT_META)
 }

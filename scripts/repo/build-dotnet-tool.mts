@@ -16,11 +16,12 @@ import os from 'node:os'
 import path from 'node:path'
 import process from 'node:process'
 
-import { errorMessage } from '@socketsecurity/lib-stable/errors/message'
 import { getDefaultLogger } from '@socketsecurity/lib-stable/logger/default'
 import { spawn } from '@socketsecurity/lib-stable/process/spawn/child'
 
 import { isMainModule } from '../fleet/process/is-main-module.mts'
+import { runMain } from '../fleet/process/main/run.mts'
+import type { ScriptMeta } from '../fleet/process/main/run.mts'
 import { strictDelete } from '../fleet/fs/strict.mts'
 import {
   DOTNET_TOOL_DIR,
@@ -30,6 +31,12 @@ import {
 } from './paths.mts'
 
 const logger = getDefaultLogger()
+
+export const SCRIPT_META: ScriptMeta = {
+  describe: 'Build the .NET facts emitter for the npm package.',
+  help: 'Usage: pnpm run build:dotnet-tool',
+  json: 'result',
+}
 
 export async function publishTool(stagingDir: string): Promise<void> {
   await spawn(
@@ -91,11 +98,5 @@ export async function main(): Promise<void> {
 }
 
 if (isMainModule(import.meta.url)) {
-  main().then(
-    () => process.exit(0),
-    (error: unknown) => {
-      logger.error(errorMessage(error))
-      process.exit(1)
-    },
-  )
+  runMain(main, SCRIPT_META)
 }
