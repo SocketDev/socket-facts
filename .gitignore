@@ -300,6 +300,7 @@ pnpm-debug.log
 !/.github/workflows/cron-weekly-fuzz.yml
 !/.github/workflows/cron-weekly-odai-cache.yml
 !/.github/workflows/cron-weekly-update.yml
+!/.github/workflows/nightly-npm.yml
 !/.github/workflows/publish-npm.yml
 !/.github/workflows/release-github.yml
 !/.github/workflows/sweep-jobs.yml

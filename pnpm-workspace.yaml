@@ -7,7 +7,7 @@ catalog:
   # actions is its GitHub-Actions parser, pinned explicitly (not left
   # transitive) so its version is uniform fleet-wide.
   '@ultrathink/acorn.rs.wasm': 0.1.1
-  'ata-validator': 1.27.0
+  'ata-validator': 1.27.1
   'brace-expansion': 5.0.12
   'dtu-github-actions': 0.18.1
   # shadscan — shadcn UI audit CLI for the design skills (missing UI
@@ -80,7 +80,7 @@ catalog:
   'npm-high-impact': 1.13.0
   'oxfmt': 0.70.0
   'oxlint': 1.85.0
-  'oxlint-tsgolint': 7.0.2002
+  'oxlint-tsgolint': 7.0.2003
   # parse5 — the HTML parser half of the markdown story. mdast hands raw HTML
   # back as an opaque `html` node (README `<picture>`/`<img>` blocks), so
   # attribute-level edits need parse5's per-attribute source locations to land
@@ -383,18 +383,6 @@ minimumReleaseAgeExclude:
   - '@oxfmt/binding-win32-ia32-msvc@0.70.0'
   # published: 2026-09-21 | removable: 2026-09-28
   - '@oxfmt/binding-win32-x64-msvc@0.70.0'
-  # published: 2026-09-18 | removable: 2026-09-25
-  - '@oxlint-tsgolint/darwin-arm64@7.0.2002'
-  # published: 2026-09-18 | removable: 2026-09-25
-  - '@oxlint-tsgolint/darwin-x64@7.0.2002'
-  # published: 2026-09-18 | removable: 2026-09-25
-  - '@oxlint-tsgolint/linux-arm64@7.0.2002'
-  # published: 2026-09-18 | removable: 2026-09-25
-  - '@oxlint-tsgolint/linux-x64@7.0.2002'
-  # published: 2026-09-18 | removable: 2026-09-25
-  - '@oxlint-tsgolint/win32-arm64@7.0.2002'
-  # published: 2026-09-18 | removable: 2026-09-25
-  - '@oxlint-tsgolint/win32-x64@7.0.2002'
   # published: 2026-09-21 | removable: 2026-09-28
   - '@oxlint/binding-android-arm-eabi@1.85.0'
   # published: 2026-09-21 | removable: 2026-09-28
@@ -465,12 +453,24 @@ minimumReleaseAgeExclude:
   - '@rolldown/binding-win32-x64-msvc@1.2.10'
   # published: 2026-09-21 | removable: 2026-09-28
   - 'oxfmt@0.70.0'
-  # published: 2026-09-18 | removable: 2026-09-25
-  - 'oxlint-tsgolint@7.0.2002'
   # published: 2026-09-21 | removable: 2026-09-28
   - 'oxlint@1.85.0'
   # published: 2026-09-23 | removable: 2026-09-30
   - 'rolldown@1.2.10'
+  # published: 2026-09-24 | removable: 2026-10-01
+  - '@oxlint-tsgolint/darwin-arm64@7.0.2003'
+  # published: 2026-09-24 | removable: 2026-10-01
+  - '@oxlint-tsgolint/darwin-x64@7.0.2003'
+  # published: 2026-09-24 | removable: 2026-10-01
+  - '@oxlint-tsgolint/linux-arm64@7.0.2003'
+  # published: 2026-09-24 | removable: 2026-10-01
+  - '@oxlint-tsgolint/linux-x64@7.0.2003'
+  # published: 2026-09-24 | removable: 2026-10-01
+  - '@oxlint-tsgolint/win32-arm64@7.0.2003'
+  # published: 2026-09-24 | removable: 2026-10-01
+  - '@oxlint-tsgolint/win32-x64@7.0.2003'
+  # published: 2026-09-24 | removable: 2026-10-01
+  - 'oxlint-tsgolint@7.0.2003'
 
 # Native post-install build scripts. These three arrive transitively via
 # @redwoodjs/agent-ci's `ssh2` (optional crypto acceleration). agent-ci's
@@ -567,6 +567,6 @@ tasks:
     dependsOn: []
 peerDependencyRules:
   allowedVersions:
-    '@socketsecurity/lib>typescript': 7.1.0-dev.20260917.1
-    '@socketsecurity/registry>typescript': 7.1.0-dev.20260917.1
-    mcp-tada>typescript: 7.1.0-dev.20260917.1
+    '@socketsecurity/lib>typescript': 7.0.2
+    '@socketsecurity/registry>typescript': 7.0.2
+    mcp-tada>typescript: 7.0.2
