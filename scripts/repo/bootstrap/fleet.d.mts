@@ -198,6 +198,7 @@ export interface FleetFileManifest {
     files: readonly string[];
   }> | undefined;
   files: Record<string, string>;
+  repoOwnedFiles?: readonly string[] | undefined;
   movedPaths?: ReadonlyArray<WorkflowFileMove> | undefined;
   removedPaths?: readonly string[] | undefined;
   segments?: ReadonlyArray<{
@@ -329,7 +330,7 @@ export declare function refreshFleetPackCheckoutExcludes(config: {
 export declare function untrackFleetPackPaths(config: UntrackFleetPackConfig): void;
 export type FleetCommentStyle = 'hash' | 'html' | 'json' | 'slash';
 export declare const HYBRID_BUNDLE_PATHS: ReadonlySet<string>;
-export interface BundleManifest extends Pick<FleetFileManifest, 'capabilityScopedFiles' | 'conditionalScopedFiles' | 'shapeScopedFiles'> {
+export interface BundleManifest extends Pick<FleetFileManifest, 'capabilityScopedFiles' | 'conditionalScopedFiles' | 'repoOwnedFiles' | 'shapeScopedFiles'> {
   readonly files: Record<string, string>;
   readonly generatedPaths?: readonly string[] | undefined;
   readonly movedPaths?: ReadonlyArray<WorkflowFileMove> | undefined;
@@ -651,6 +652,7 @@ export interface InstallFilesOptions {
 export interface InstallFilesResult {
   placed: number;
   skippedAlwaysTracked: number;
+  skippedRepoOwned: number;
   /**
    * Always-tracked paths force-refreshed from the bundle (only under
    * --refresh-tracked).
@@ -804,7 +806,7 @@ export declare function parseYamlEntryChunks(bodyLines: readonly string[]): Yaml
  * inside the fleet-owned `hooks` key. Fleet-shipped entries (present in the
  * bundle block) take the bundle's text, comments included; member-local
  * entries that appear only in the consumer block survive in their original
- * order after the fleet set. Scalar-shaped blocks (`saveExact: true`) have no
+ * order after the fleet set. Scalar-shaped workspace settings have no
  * nested entries, so the bundle block replaces wholesale. Trailing blank lines
  * follow the consumer block so inter-block spacing is preserved. The merged
  * block's head (the separator run above its key) is the BUNDLE's when the

@@ -16148,7 +16148,7 @@ function parseYamlEntryChunks(bodyLines) {
  * inside the fleet-owned `hooks` key. Fleet-shipped entries (present in the
  * bundle block) take the bundle's text, comments included; member-local
  * entries that appear only in the consumer block survive in their original
- * order after the fleet set. Scalar-shaped blocks (`saveExact: true`) have no
+ * order after the fleet set. Scalar-shaped workspace settings have no
  * nested entries, so the bundle block replaces wholesale. Trailing blank lines
  * follow the consumer block so inter-block spacing is preserved. The merged
  * block's head (the separator run above its key) is the BUNDLE's when the
@@ -17002,12 +17002,16 @@ function filterManifestForShape(manifest, shape) {
  */
 function fleetPackOwnedPaths(manifest) {
   const hybridPaths = computeHybridPaths(manifest)
+  const repoOwnedPaths = new Set(
+    (manifest.repoOwnedFiles ?? []).map(normalizeBundlePath),
+  )
   const entries = /* @__PURE__ */ new Set()
   const files = Object.keys(manifest.files)
   for (let i = 0, { length } = files; i < length; i += 1) {
     const p = normalizeBundlePath(files[i])
     if (
       hybridPaths.has(p) ||
+      repoOwnedPaths.has(p) ||
       isFleetCanonicalSpliceFile(p) ||
       isAlwaysTrackedSurface(p)
     )
@@ -18671,6 +18675,9 @@ function pruneStaleFleetFiles(dest, manifest, previousFiles, options) {
   }
   const { archiveManifest } = opts
   const candidates = new Set(previousFiles)
+  const repoOwnedPaths = new Set(
+    (manifest.repoOwnedFiles ?? []).map(normalizeBundlePath),
+  )
   for (const group of archiveManifest?.conditionalScopedFiles ?? [])
     for (const file of group.files) {
       const absolute = path.join(dest, normalizeBundlePath(file))
@@ -18694,6 +18701,7 @@ function pruneStaleFleetFiles(dest, manifest, previousFiles, options) {
     const rel = normalizeBundlePath(file)
     if (
       kept.has(rel) ||
+      repoOwnedPaths.has(rel) ||
       [...(opts.preservedPaths ?? [])].some(
         file => file === rel || file.startsWith(`${rel}/`),
       )
@@ -18974,20 +18982,33 @@ function installFiles(filesDir, dest, manifest, options) {
   const generatedPaths = new Set(
     (manifest.generatedPaths ?? []).map(normalizeBundlePath),
   )
+  const repoOwnedPaths = new Set(
+    (manifest.repoOwnedFiles ?? []).map(normalizeBundlePath),
+  )
   const hybridPaths = computeHybridPaths(manifest)
   const rels = Object.keys(manifest.files)
   let placed = 0
   let unchanged = 0
   let skippedAlwaysTracked = 0
+  let skippedRepoOwned = 0
   const refreshedTracked = []
   for (let i = 0, { length } = rels; i < length; i += 1) {
     const rel = rels[i]
+    const target = path.join(dest, rel)
+    const stat = repoOwnedPaths.has(normalizeBundlePath(rel))
+      ? lstatSync(target, { throwIfNoEntry: false })
+      : void 0
+    if (stat !== void 0) {
+      if (stat.isFile() && (stat.mode & 128) === 0)
+        chmodSync(target, (stat.mode & 511) | 128)
+      skippedRepoOwned += 1
+      continue
+    }
     if (isPreservedInstallPath(rel, { preservedPaths: opts.preservedPaths })) {
       skippedAlwaysTracked += 1
       continue
     }
     const source = path.join(filesDir, rel)
-    const target = path.join(dest, rel)
     const rewritten =
       opts.templateDir === void 0
         ? void 0
@@ -19014,6 +19035,7 @@ function installFiles(filesDir, dest, manifest, options) {
       if (!refreshTracked && spliced === void 0) {
         if (
           locking &&
+          !repoOwnedPaths.has(normalizeBundlePath(rel)) &&
           isLockablePlacement({
             generatedPaths,
             hybridPaths,
@@ -19044,6 +19066,7 @@ function installFiles(filesDir, dest, manifest, options) {
       unchanged += 1
       if (
         locking &&
+        !repoOwnedPaths.has(normalizeBundlePath(rel)) &&
         isLockablePlacement({
           generatedPaths,
           hybridPaths,
@@ -19060,6 +19083,7 @@ function installFiles(filesDir, dest, manifest, options) {
     placed += 1
     if (
       locking &&
+      !repoOwnedPaths.has(normalizeBundlePath(rel)) &&
       isLockablePlacement({
         generatedPaths,
         hybridPaths,
@@ -19071,6 +19095,7 @@ function installFiles(filesDir, dest, manifest, options) {
   return {
     placed,
     skippedAlwaysTracked,
+    skippedRepoOwned,
     refreshedTracked,
     unchanged,
   }
@@ -19110,11 +19135,28 @@ function materializeFromLocalTemplate(dest, manifest, options) {
       )
     : options?.preservedPaths
   migrateRuleFile(dest, { preservedPaths })
-  const shaped = effectiveMemberManifest(manifest, dest)
+  const localRepoOwnedFiles = Object.entries(manifest.files)
+    .filter(([, entry]) => {
+      if (entry === null || typeof entry !== 'object') return false
+      const metadata = entry
+      return metadata.owner === 'repo' && metadata.seedIfAbsent === true
+    })
+    .map(([rel]) => normalizeBundlePath(rel))
+  const shaped = effectiveMemberManifest(
+    {
+      ...manifest,
+      repoOwnedFiles: [
+        ...(manifest.repoOwnedFiles ?? []),
+        ...localRepoOwnedFiles,
+      ],
+    },
+    dest,
+  )
   const total = {
     placed: 0,
     unchanged: 0,
     skippedAlwaysTracked: 0,
+    skippedRepoOwned: 0,
     refreshedTracked: [],
   }
   for (const source of localTemplateManifests(filesDir, shaped, dest)) {
@@ -19126,6 +19168,7 @@ function materializeFromLocalTemplate(dest, manifest, options) {
     total.placed += result.placed
     total.unchanged += result.unchanged
     total.skippedAlwaysTracked += result.skippedAlwaysTracked
+    total.skippedRepoOwned += result.skippedRepoOwned
     total.refreshedTracked.push(...result.refreshedTracked)
   }
   const mirrorEntries = loadMirrorEntriesFromBundle(dest)
@@ -45831,13 +45874,26 @@ function canonicalMcpConfigPath(repoRoot) {
 
 var import_predicates = require_predicates$3()
 const MCP_PROVIDERS = {
+  linear: {
+    connectOrder: 5,
+    serverName: 'fleet-linear',
+    url: 'https://mcp.linear.app/mcp',
+    auth: 'oauth',
+    setupUrl: 'https://linear.app',
+    allowedAuthorizationHosts: ['linear.app', 'mcp.linear.app'],
+    clients: {
+      claude: { kind: 'oauth' },
+      codex: { kind: 'oauth' },
+      opencode: { kind: 'oauth' },
+    },
+  },
   notion: {
     connectOrder: 4,
     serverName: 'fleet-notion',
     url: 'https://mcp.notion.com/mcp',
     auth: 'oauth',
     setupUrl: 'https://mcp.notion.com',
-    allowedAuthorizationHosts: ['mcp.notion.com'],
+    allowedAuthorizationHosts: ['app.notion.com', 'mcp.notion.com'],
     clients: {
       claude: { kind: 'oauth' },
       codex: { kind: 'oauth' },
@@ -46259,8 +46315,12 @@ function writeCodexAdapters(repoRoot, servers) {
     const adapter = CODEX_ADAPTERS[i]
     const dest = mcpConfigFilePath(repoRoot, adapter.path)
     mkdirSync(path.dirname(dest), { recursive: true })
-    writeThroughMirrorLock(dest, adapter.render(servers))
+    writeGeneratedConfigIfChanged(dest, adapter.render(servers))
   }
+}
+function writeGeneratedConfigIfChanged(dest, content) {
+  if (existsSync(dest) && readFileSync(dest, 'utf8') === content) return
+  writeThroughMirrorLock(dest, content)
 }
 /**
  * Regenerate the project MCP adapters from `.mcp.json`.
@@ -46287,7 +46347,7 @@ function writeMcpClientConfigs(repoRoot) {
       'Cannot update opencode.json: expected an object. Fix the existing config before regenerating MCP servers.',
     )
   const generated = createOpenCodeMcpConfig(servers)
-  writeThroughMirrorLock(
+  writeGeneratedConfigIfChanged(
     configPath,
     formatOpenCodeMcpConfig(
       {
@@ -46938,13 +46998,17 @@ async function installFleet(config) {
       installResult.skippedAlwaysTracked > 0
         ? ` ${installResult.skippedAlwaysTracked} always-tracked file(s) left to the cascade (run commit-cascade to refresh them).`
         : ''
+    const repoOwnedNote =
+      installResult.skippedRepoOwned > 0
+        ? ` ${installResult.skippedRepoOwned} repo-owned file(s) preserved.`
+        : ''
     const refreshedNote =
       installResult.refreshedTracked.length > 0
         ? ` Refreshed ${installResult.refreshedTracked.length} always-tracked file(s) from the bundle — commit these changes:\n` +
           installResult.refreshedTracked.map(rel => `  • ${rel}`).join('\n')
         : ''
     logger.log(
-      `install-fleet: placed ${installResult.placed} (+${installResult.unchanged} already current) of ${fileCount} file(s) + ${segmentCount} segment(s)${prunedNote} from ${sourceRef} (template ${manifest.templateSha}) → ${dest}.${skippedNote}${refreshedNote}`,
+      `install-fleet: placed ${installResult.placed} (+${installResult.unchanged} already current) of ${fileCount} file(s) + ${segmentCount} segment(s)${prunedNote} from ${sourceRef} (template ${manifest.templateSha}) → ${dest}.${skippedNote}${repoOwnedNote}${refreshedNote}`,
     )
     return 0
   } finally {
@@ -46994,7 +47058,7 @@ function runFromTemplate(config) {
   }
   if (!config.quiet)
     logger.log(
-      `install-fleet: materialized ${result.placed} file(s) from template/base/universal (${result.unchanged} already current, ${result.skippedAlwaysTracked} always-tracked left alone).`,
+      `install-fleet: materialized ${result.placed} file(s) from template/base/universal (${result.unchanged} already current, ${result.skippedAlwaysTracked} always-tracked left alone, ${result.skippedRepoOwned} repo-owned preserved).`,
     )
   return 0
 }
