@@ -117,7 +117,7 @@ describe('dotnet records → assemble', () => {
     })
 
     expect(report.configsByProject).toStrictEqual([
-      { project: 'App', configs: ['net6.0', 'net8.0'] },
+      { __proto__: null, project: 'App', configs: ['net6.0', 'net8.0'] },
     ])
   })
 

@@ -23,6 +23,8 @@
 // before it is sent; it only matters to an out-of-band caller driving a
 // shipped emitter with hand-written patterns.
 
+import { normalizePath } from '@socketsecurity/lib-stable/paths/normalize'
+
 export type ConfigGlobFilter = (name: string) => boolean
 
 // Comma-separated globs → anchored regex pattern sources.
@@ -83,8 +85,7 @@ export function globToRegexSource(glob: string): string {
         }
         // Only literal chars and `-` ranges are meaningful; neutralize
         // regex-class tricks (`&` guards Java's `&&` class intersection).
-        body = body
-          .replace(/\\/g, '\\\\')
+        body = normalizePath(body)
           .replace(/\[/g, '\\[')
           .replace(/\]/g, '\\]')
           .replace(/&/g, '\\&')

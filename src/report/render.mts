@@ -106,8 +106,8 @@ export function fmtList(list: string[], limit: number): string {
 
 export function renderResolutionErrorReport(
   failures: ResolutionFailure[],
-  scannedConfigs: string[] = [],
-  tool: BuildTool = 'gradle',
+  scannedConfigs: string[],
+  tool: BuildTool,
   opts: {
     ignoreUnresolved?: boolean | undefined
     unscannable?: UnscannableConfig[] | undefined
@@ -124,6 +124,7 @@ export function renderResolutionErrorReport(
 // Severity is per-kind; the exit-code decision lives in the caller. We do NOT
 // cross-reference what resolved elsewhere: the failed selector carries no
 // classifier/type, so relating a failed and a succeeded dep is unsound.
+// oxlint-disable-next-line complexity -- category aggregation and rendering.
 export function renderResolutionReport(
   failures: ResolutionFailure[],
   scannedConfigs: string[],
@@ -173,7 +174,7 @@ export function renderResolutionReport(
   // failure: ambiguity stays lenient, every other cause is fail-closed.
   const unscannableInfos = unscannable.map(u => {
     const category = dialect.classify(u.detail)
-    return { ...u, category, blocking: isBlocking(category) }
+    return { __proto__: null, ...u, category, blocking: isBlocking(category) }
   })
   const blockingUnscannable = unscannableInfos.filter(u => u.blocking)
   const nonBlockingUnscannable = unscannableInfos.filter(u => !u.blocking)
@@ -199,6 +200,7 @@ export function renderResolutionReport(
 
   const groups = dialect.categories
     .map(spec => ({
+      __proto__: null,
       spec,
       infos: dedupCoords(
         allInfos.filter(i => i.category === spec.key).map(i => i.coord),
@@ -331,10 +333,12 @@ export function renderResolutionReport(
     }
   }
 
-  return {
+  const report = {
+    __proto__: null,
     summary: out.join('\n'),
     details: detailLines.join('\n'),
     hasBlockingFailures,
     nonBlockingNotice: notices.join('\n'),
   }
+  return report
 }

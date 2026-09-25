@@ -1,5 +1,6 @@
 import crypto from 'node:crypto'
 import { existsSync } from 'node:fs'
+import { compareStr } from '@socketsecurity/lib-stable/sorts/strings'
 
 import { isBuildTool } from '../run/build-tool.mts'
 import { buildArtifactPaths, gav } from './artifact-paths.mts'
@@ -157,13 +158,12 @@ export function buildConfigsByProject(
     .map(({ 0: projectKey, 1: configs }) => {
       const p = parsed.projects.get(projectKey)
       return {
+        __proto__: null,
         project: p?.dir || p?.name || projectKey,
         configs: [...configs].toSorted(),
       }
     })
-    .toSorted((a, b) =>
-      a.project < b.project ? -1 : a.project > b.project ? 1 : 0,
-    )
+    .toSorted((a, b) => compareStr(a.project, b.project))
 }
 
 export function buildPerRoot(parsed: ParsedRecords): Map<string, PerRoot> {
@@ -250,7 +250,7 @@ export function buildProjects(
   projects.sort((a, b) => {
     const ka = `${a.subprojectDir} ${a.namespace ?? ''}:${a.name}`
     const kb = `${b.subprojectDir} ${b.namespace ?? ''}:${b.name}`
-    return ka < kb ? -1 : ka > kb ? 1 : 0
+    return compareStr(ka, kb)
   })
   return projects
 }

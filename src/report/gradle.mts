@@ -1,3 +1,5 @@
+import { includesFailureTerm } from './utils.mts'
+
 import type { FailureCategory, ResolutionDialect } from './render.mts'
 
 // Gradle's variant-aware resolver: distinct exceptions give mutually-exclusive
@@ -11,10 +13,12 @@ export function classifyGradleFailure(detail: string): FailureCategory {
   // Zero compatible variants — the opposite of ambiguity below. Gradle phrases
   // this several ways depending on version and whether attributes were supplied.
   if (
-    t.includes('no matching variant') ||
-    t.includes('no variants of') ||
-    t.includes('unable to find a matching variant') ||
-    t.includes('no compatible variant')
+    includesFailureTerm(t, [
+      'no matching variant',
+      'no variants of',
+      'unable to find a matching variant',
+      'no compatible variant',
+    ])
   ) {
     return 'no-matching-variant'
   }
@@ -22,15 +26,17 @@ export function classifyGradleFailure(detail: string): FailureCategory {
     return 'variant-ambiguity'
   }
   if (
-    t.includes('could not get') ||
-    t.includes('could not head') ||
-    t.includes('status code 401') ||
-    t.includes('status code 403') ||
-    t.includes('connection refused') ||
-    t.includes('connection timed out') ||
-    t.includes('read timed out') ||
-    t.includes('certification path') ||
-    t.includes('peer not authenticated')
+    includesFailureTerm(t, [
+      'could not get',
+      'could not head',
+      'status code 401',
+      'status code 403',
+      'connection refused',
+      'connection timed out',
+      'read timed out',
+      'certification path',
+      'peer not authenticated',
+    ])
   ) {
     return 'repository-or-network'
   }

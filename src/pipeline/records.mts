@@ -29,6 +29,7 @@ export function bool(s: string | undefined): boolean {
   return s === '1' || s === 'true'
 }
 
+// oxlint-disable-next-line complexity -- line-protocol record dispatcher.
 export function parseRecords(text: string): ParsedRecords {
   const result: ParsedRecords = {
     tool: '',

@@ -1,3 +1,5 @@
+import { includesFailureTerm } from './utils.mts'
+
 import type { FailureCategory, ResolutionDialect } from './render.mts'
 
 // Maven's resolver (Aether/maven-resolver): no attribute-based variants. Two
@@ -6,34 +8,40 @@ import type { FailureCategory, ResolutionDialect } from './render.mts'
 export function classifyMavenFailure(detail: string): FailureCategory {
   const t = (detail || '').toLowerCase()
   if (
-    t.includes('could not transfer') ||
-    t.includes('connection refused') ||
-    t.includes('connect timed out') ||
-    t.includes('connection timed out') ||
-    t.includes('read timed out') ||
-    t.includes('status code: 401') ||
-    t.includes('status code: 403') ||
-    t.includes('unauthorized') ||
-    t.includes('forbidden') ||
-    t.includes('peer not authenticated') ||
-    t.includes('certpathbuilderexception')
+    includesFailureTerm(t, [
+      'could not transfer',
+      'connection refused',
+      'connect timed out',
+      'connection timed out',
+      'read timed out',
+      'status code: 401',
+      'status code: 403',
+      'unauthorized',
+      'forbidden',
+      'peer not authenticated',
+      'certpathbuilderexception',
+    ])
   ) {
     return 'repository-or-network'
   }
   if (
-    t.includes('could not find artifact') ||
-    t.includes('failure to find') ||
-    t.includes('could not resolve') ||
-    t.includes('no versions available') ||
-    t.includes('not found')
+    includesFailureTerm(t, [
+      'could not find artifact',
+      'failure to find',
+      'could not resolve',
+      'no versions available',
+      'not found',
+    ])
   ) {
     return 'not-found'
   }
   // POM exists but can't be read/parsed.
   if (
-    t.includes('failed to read artifact descriptor') ||
-    t.includes('invalid pom') ||
-    t.includes('could not parse pom')
+    includesFailureTerm(t, [
+      'failed to read artifact descriptor',
+      'invalid pom',
+      'could not parse pom',
+    ])
   ) {
     return 'config-problem'
   }

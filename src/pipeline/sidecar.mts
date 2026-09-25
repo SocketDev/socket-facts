@@ -1,4 +1,5 @@
 import { mavenCoordinateKey } from '../contract/coordinate.mts'
+import { compareStr } from '@socketsecurity/lib-stable/sorts/strings'
 
 import type { SocketFactsSbom } from '../contract/sbom.mts'
 import type {
@@ -115,7 +116,7 @@ export function serializeSidecar(
   resolved.sort((a, b) => {
     const ka = `${a.ecosystem ?? ''}:${a.group}:${a.name}:${a.ext}:${a.classifier ?? ''}:${a.version}`
     const kb = `${b.ecosystem ?? ''}:${b.group}:${b.name}:${b.ext}:${b.classifier ?? ''}:${b.version}`
-    return ka < kb ? -1 : ka > kb ? 1 : 0
+    return compareStr(ka, kb)
   })
   return resolved
 }

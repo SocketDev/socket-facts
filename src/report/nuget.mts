@@ -1,3 +1,5 @@
+import { includesFailureTerm } from './utils.mts'
+
 import type { FailureCategory, ResolutionDialect } from './render.mts'
 
 // NuGet restore: failures come from the assets file's `logs` section, whose
@@ -11,44 +13,52 @@ export function classifyNugetFailure(detail: string): FailureCategory {
   // people chasing connectivity. `showReason` on config-problem surfaces the
   // real loader message in the summary.
   if (
-    t.includes('could not load file or assembly') ||
-    t.includes('missingmethodexception') ||
-    t.includes('0x80131040')
+    includesFailureTerm(t, [
+      'could not load file or assembly',
+      'missingmethodexception',
+      '0x80131040',
+    ])
   ) {
     return 'config-problem'
   }
   if (
-    t.includes('nu1301') ||
-    t.includes('nu1302') ||
-    t.includes('nu1303') ||
-    t.includes('nu1304') ||
-    t.includes('unable to load the service index') ||
-    t.includes('401') ||
-    t.includes('403') ||
-    t.includes('unauthorized') ||
-    t.includes('forbidden') ||
-    t.includes('connection refused') ||
-    t.includes('timed out')
+    includesFailureTerm(t, [
+      'nu1301',
+      'nu1302',
+      'nu1303',
+      'nu1304',
+      'unable to load the service index',
+      '401',
+      '403',
+      'unauthorized',
+      'forbidden',
+      'connection refused',
+      'timed out',
+    ])
   ) {
     return 'repository-or-network'
   }
   if (
-    t.includes('nu1101') ||
-    t.includes('nu1102') ||
-    t.includes('nu1103') ||
-    t.includes('unable to find package')
+    includesFailureTerm(t, [
+      'nu1101',
+      'nu1102',
+      'nu1103',
+      'unable to find package',
+    ])
   ) {
     return 'not-found'
   }
   // Project/framework incompatibilities and a restore that never produced an
   // assets file are project-configuration problems, not missing packages.
   if (
-    t.includes('nu1105') ||
-    t.includes('nu1201') ||
-    t.includes('nu1202') ||
-    t.includes('is not compatible with') ||
-    t.includes('produced no project.assets.json') ||
-    t.includes('stopped before it finished')
+    includesFailureTerm(t, [
+      'nu1105',
+      'nu1201',
+      'nu1202',
+      'is not compatible with',
+      'produced no project.assets.json',
+      'stopped before it finished',
+    ])
   ) {
     return 'config-problem'
   }

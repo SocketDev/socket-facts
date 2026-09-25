@@ -9,6 +9,32 @@ import type { RawProject } from './records.mts'
 // different question — the SBOM says what resolved, this says where it landed —
 // and only a reachability run asks the second one.
 
+export function addProjectArtifactPaths(
+  projects: RawProject[],
+  fileExists: (path: string) => boolean,
+  coords: Set<string>,
+  sourcesByCoord: Map<string, string[]>,
+  targetsByCoord: Map<string, string[]>,
+  targetsByGav: Map<string, string[]>,
+): void {
+  for (let i = 0, { length } = projects; i < length; i += 1) {
+    const project = projects[i]!
+    const coordKey = mavenCoordinateKey({
+      groupId: project.group,
+      artifactId: project.name,
+      version: project.version,
+    })
+    if (!coordKey) {
+      continue
+    }
+    coords.add(coordKey)
+    unionInto(sourcesByCoord, coordKey, project.sources.filter(fileExists))
+    const targets = project.targets.filter(fileExists)
+    unionInto(targetsByCoord, coordKey, targets)
+    unionInto(targetsByGav, coordKey, targets)
+  }
+}
+
 export function buildArtifactPaths(
   finalNodes: Map<string, MergedNode>,
   projects: RawProject[],
@@ -76,22 +102,14 @@ export function buildArtifactPaths(
   // A top-level module is a `project` but usually not a dependency node, so its
   // source roots (where reachability starts) are missed by the node loop above;
   // emit first-party module paths here.
-  for (let i = 0, { length } = projects; i < length; i += 1) {
-    const p = projects[i]!
-    const coordKey = mavenCoordinateKey({
-      groupId: p.group,
-      artifactId: p.name,
-      version: p.version,
-    })
-    if (!coordKey) {
-      continue
-    }
-    coords.add(coordKey)
-    unionInto(sourcesByCoord, coordKey, p.sources.filter(fileExists))
-    const targets = p.targets.filter(fileExists)
-    unionInto(targetsByCoord, coordKey, targets)
-    unionInto(targetsByGav, coordKey, targets)
-  }
+  addProjectArtifactPaths(
+    projects,
+    fileExists,
+    coords,
+    sourcesByCoord,
+    targetsByCoord,
+    targetsByGav,
+  )
   return { targetsByCoord, targetsByGav, sourcesByCoord, coords }
 }
 
