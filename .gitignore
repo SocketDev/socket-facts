@@ -1,8 +1,7 @@
-# <fleet>
 # Managed by socket-wheelhouse. Don't edit locally — edit upstream
 # in scripts/repo/commit-cascade/checks/gitignore-fleet-block.mts and
-# re-cascade via `pnpm run sync`. Project-specific ignores stay
-# OUTSIDE this block; the fixer preserves them.
+# re-cascade via `pnpm run sync`. Project-specific ignores stay in the
+# <repo> cutouts; the fixer preserves them.
 # Per-machine Claude Code permission config + log dirs stay ignored;
 # the cascaded subdirs (agents, commands, hooks, output-styles, plugins,
 # settings.json, skills, workflows) are explicitly re-included so the
@@ -263,6 +262,7 @@ opencode.json
 .claude/hooks/fleet/_shared/es-polyfills.mts
 .claude/hooks/fleet/_shared/evasion-normalize.mts
 .claude/hooks/fleet/_shared/excluded-entry.mts
+.claude/hooks/fleet/_shared/exec-command-evidence.mts
 .claude/hooks/fleet/_shared/failing-tests-ledger.mts
 .claude/hooks/fleet/_shared/fetch-allowlist.mts
 .claude/hooks/fleet/_shared/fleet-context.mts
@@ -304,6 +304,7 @@ opencode.json
 .claude/hooks/fleet/_shared/nested-gitignore.mts
 .claude/hooks/fleet/_shared/nested-strings.mts
 .claude/hooks/fleet/_shared/npmrc-trust.mts
+.claude/hooks/fleet/_shared/one-commit-pr-branch.mts
 .claude/hooks/fleet/_shared/outbound-voice.mts
 .claude/hooks/fleet/_shared/package-manager-auto-update.mts
 .claude/hooks/fleet/_shared/parked-paths.mts
@@ -3733,6 +3734,7 @@ scripts/fleet/credentials/group.mts
 scripts/fleet/credentials/identity.mts
 scripts/fleet/credentials/migrate.mts
 scripts/fleet/credentials/migration.mts
+scripts/fleet/credentials/otp/bindings.mts
 scripts/fleet/credentials/paths.mts
 scripts/fleet/credentials/profile.mts
 scripts/fleet/credentials/profile/schema.mts
@@ -4370,7 +4372,9 @@ scripts/fleet/release/github/reconcile.mts
 scripts/fleet/release/github/remote.mts
 scripts/fleet/release/hint.mts
 scripts/fleet/release/member-probe.mts
+scripts/fleet/release/nightly/cli.mts
 scripts/fleet/release/nightly/decision.mts
+scripts/fleet/release/nightly/plan.mts
 scripts/fleet/release/npm-only-provenance.mts
 scripts/fleet/release/pipeline/deps.mts
 scripts/fleet/release/pipeline/gate-runners.mts
@@ -4439,6 +4443,7 @@ scripts/fleet/setup/bootstrap-zero-dep-packages.mjs
 scripts/fleet/setup/bootstrap/zero-dep-packages.d.mts
 scripts/fleet/setup/brew.mts
 scripts/fleet/setup/browser/activate.mts
+scripts/fleet/setup/browser/activity.mts
 scripts/fleet/setup/browser/bridge.mts
 scripts/fleet/setup/browser/chrome.mts
 scripts/fleet/setup/browser/install.mts
@@ -4605,8 +4610,11 @@ scripts/fleet/test/budget/balance/input.mts
 scripts/fleet/test/budget/balance/options.mts
 scripts/fleet/test/budget/balance/plan.mts
 scripts/fleet/test/budget/headroom.mts
+scripts/fleet/test/fast.mts
 scripts/fleet/test/fix.mts
+scripts/fleet/test/lane-entrypoint.mts
 scripts/fleet/test/lane.mts
+scripts/fleet/test/mid.mts
 scripts/fleet/test/profile-preload.mts
 scripts/fleet/test/profile-report.mts
 scripts/fleet/test/profile.mts
@@ -4615,6 +4623,7 @@ scripts/fleet/test/runtime/cache.mts
 scripts/fleet/test/runtime/capacity.mts
 scripts/fleet/test/runtime/profiling.mts
 scripts/fleet/test/runtime/session.mts
+scripts/fleet/test/slow.mts
 scripts/fleet/triaging-findings/cli.mts
 scripts/fleet/triaging-findings/lib/ingest.mts
 scripts/fleet/triaging-findings/lib/report.mts
@@ -4714,13 +4723,13 @@ test/fleet/registry-infra/npm/placeholder.test.mts
 test/fleet/scripts/setup.mts
 test/fleet/unit/ci/gates/run.test.mts
 test/fleet/unit/comment-voice.test.mts
+test/fleet/unit/credentials/otp/bindings.test.mts
 test/fleet/unit/fix/plan.test.mts
 test/fleet/unit/fix/run.test.mts
 test/fleet/unit/lockstep/emit-mirror-globs.test.mts
 test/fleet/unit/registry-infra/cargo/placeholder.test.mts
 test/fleet/unit/registry-infra/npm/placeholder.test.mts
 # </fleet-pack>
-# </fleet>
 # <repo>
 # Maven core-extension build output. `pnpm run build:maven-extension` compiles
 # the sources under emitters/maven-extension/src into the jar the published
