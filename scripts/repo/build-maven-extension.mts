@@ -33,6 +33,7 @@ export const SHADED_JAR = path.join(
 export async function packageExtension(): Promise<void> {
   await spawn(MAVEN_WRAPPER, ['-q', '--batch-mode', 'package'], {
     cwd: MAVEN_EXTENSION_DIR,
+    env: { ...process.env, MVNW_VERBOSE: 'true' },
     stdio: 'inherit',
   })
 }
