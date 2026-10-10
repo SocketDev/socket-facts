@@ -15,10 +15,7 @@
   "files": [
     "CHANGELOG.md",
     "dist/**/*",
-    "emitters/**/*",
-    "!emitters/**/bin/**",
-    "!emitters/**/obj/**",
-    "!emitters/**/target/**"
+    "emitters/**/*"
   ],
   "sideEffects": false,
   "main": "./dist/index.js",
