@@ -10,8 +10,8 @@
  *   therefore fail-closed on a packaging run.
  *
  *   1. An emitter source is missing. Always a failure.
- *   2. `package.json` `files` does not cover `emitters/`, so npm would drop the
- *      assets from the tarball. Always a failure.
+ *   2. `package.json` `files` does not cover each runtime emitter asset, so
+ *      npm would drop an asset from the tarball. Always a failure.
  *   3. A built emitter artifact is absent — the Maven extension jar or the
  *      published dotnet tool. A failure under `--require-built` (the packaging
  *      gate) and a warning otherwise, because a plain checkout has no JDK or
@@ -26,6 +26,7 @@ import path from 'node:path'
 import process from 'node:process'
 
 import { getDefaultLogger } from '@socketsecurity/lib-stable/logger/default'
+import { normalizePath } from '@socketsecurity/lib-stable/paths/normalize'
 
 import { isMainModule } from '../../fleet/process/is-main-module.mts'
 import {
@@ -74,7 +75,14 @@ export const BUILT_EMITTER_ARTIFACTS: ReadonlyArray<{
   },
 ]
 
-export const EMITTERS_FILES_ENTRY = 'emitters/**/*'
+const REQUIRED_EMITTER_PACKAGE_PATHS: readonly string[] = [
+  'emitters/socket-facts.init.gradle',
+  'emitters/socket-facts.plugin.scala',
+  'emitters/maven-extension/socket-facts-maven-extension.jar',
+  'emitters/dotnet-tool/publish/socket-facts-dotnet.dll',
+  'emitters/dotnet-tool/publish/socket-facts-dotnet.deps.json',
+  'emitters/dotnet-tool/publish/socket-facts-dotnet.runtimeconfig.json',
+]
 
 export interface EmitterFinding {
   readonly where: string
@@ -99,6 +107,25 @@ export function readPackageFiles(): string[] {
     : []
 }
 
+function manifestEntryCoversPath(entry: string, requiredPath: string): boolean {
+  const normalizedEntry = normalizePath(entry).replace(/\/+$/u, '')
+  const normalizedRequiredPath = normalizePath(requiredPath)
+  return (
+    normalizedEntry === '.' ||
+    normalizedEntry === normalizedRequiredPath ||
+    normalizedRequiredPath.startsWith(`${normalizedEntry}/`) ||
+    path.posix.matchesGlob(normalizedRequiredPath, normalizedEntry)
+  )
+}
+
+export function manifestFilesCoverEmitterRuntimeAssets(
+  files: readonly string[],
+): boolean {
+  return REQUIRED_EMITTER_PACKAGE_PATHS.every(requiredPath =>
+    files.some(entry => manifestEntryCoversPath(entry, requiredPath)),
+  )
+}
+
 export function checkEmitterAssets(requireBuilt: boolean): EmitterFinding[] {
   const findings: EmitterFinding[] = []
   for (let i = 0, { length } = REQUIRED_EMITTER_FILES; i < length; i += 1) {
@@ -112,11 +139,11 @@ export function checkEmitterAssets(requireBuilt: boolean): EmitterFinding[] {
       })
     }
   }
-  if (!readPackageFiles().includes(EMITTERS_FILES_ENTRY)) {
+  if (!manifestFilesCoverEmitterRuntimeAssets(readPackageFiles())) {
     findings.push({
-      fix: `add "${EMITTERS_FILES_ENTRY}" to package.json \`files\``,
-      saw: 'the emitters directory is not in the `files` allowlist',
-      wanted: 'npm to ship the emitters with the package',
+      fix: 'add file, glob, or directory entries to package.json `files` that cover every runtime emitter asset',
+      saw: 'one or more runtime emitter assets are not covered by the `files` allowlist',
+      wanted: 'npm to ship the Gradle, Scala, Maven, and .NET runtime assets',
       where: 'package.json',
     })
   }
@@ -157,7 +184,7 @@ export function main(): void {
       }
     }
     logger.info(
-      `emitter-assets-are-publishable: ${REQUIRED_EMITTER_FILES.length} emitter asset(s) present and shipped.`,
+      `emitter-assets-are-publishable: ${REQUIRED_EMITTER_FILES.length} emitter source/build file(s) present; runtime assets are covered by package.json.`,
     )
     return
   }
