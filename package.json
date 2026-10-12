@@ -59,6 +59,7 @@
     "ai:drive:setup": "node scripts/fleet/setup/browser/bridge.mts",
     "ai:drive:verify": "node scripts/fleet/ai/browser/bridge/verify-installed.mts",
     "ai:odai:cache": "node scripts/fleet/ai/odai/run.mts cache",
+    "ai:odai:ci": "node scripts/fleet/ai/odai/ci.mts",
     "ai:odai:diagnose": "node scripts/fleet/ai/odai/run.mts diagnose",
     "ai:read": "node scripts/fleet/ai/bounded-reader.mts",
     "audit:consumer-source": "node scripts/fleet/audit/consumer-source.mts",
@@ -119,7 +120,6 @@
     "doctor:auth": "node scripts/fleet/check/setup-is-prompt-less.mts",
     "doctor:credentials": "node scripts/fleet/credentials/doctor.mts",
     "fix": "node scripts/fleet/fix.mts",
-    "fix:github": "node scripts/repo/fix/github/run.mts",
     "fix:js": "node scripts/fleet/fix.mts --js",
     "fix:repo": "node scripts/fleet/fix.mts --repo",
     "fleet:status": "node scripts/repo/bootstrap/fleet.mjs --status",
@@ -132,8 +132,8 @@
     "gen:glyph": "node scripts/fleet/gen/glyph.mts",
     "gen:mcp:config": "node scripts/fleet/mcp/config.mts",
     "gh:auth": "node scripts/fleet/gh-auth.mts",
-    "git:admin-push": "node scripts/fleet/git/admin/push.mts",
-    "github:browser": "node scripts/fleet/browser/github-auth.mts",
+    "git:deliver": "node scripts/fleet/git/deliver/cli.mts",
+    "github:browser": "node scripts/fleet/ai/browser/drive/github.com/auth/run.mts",
     "hide-comments": "node scripts/fleet/github/comments/hide.mts",
     "integrity-refresh": "node scripts/fleet/external-tools/refresh.mts",
     "jev:benchmark": "node scripts/fleet/ai/eval/cli.mts",
@@ -161,11 +161,11 @@
     "mcp:schemas:save": "node scripts/fleet/mcp/schemas.mts save",
     "mcp:status": "node scripts/fleet/mcp/connect.mts --status",
     "npm:approve": "node scripts/fleet/npm/approve.mts",
-    "npm:auth": "node scripts/fleet/npm-auth.mts",
+    "npm:auth": "node scripts/fleet/npm/auth/run.mts",
     "npm:auth:browser": "node scripts/fleet/npm-auth-browser.mts",
-    "npm:auth:cli": "node scripts/fleet/npm-auth-cli.mts",
     "npm:dispatch": "node scripts/fleet/npm/publish/run.mts",
-    "npm:inventory": "node scripts/fleet/registry/npm/account-inventory-read.mts",
+    "npm:inventory": "node scripts/fleet/registry/npm/account/inventory/read.mts",
+    "npm:release-record": "node scripts/fleet/release/record/run.mts",
     "npm:scan": "node scripts/fleet/npm/scan.mts",
     "npm:staged": "node scripts/fleet/npm/staged.mts",
     "npm:trust": "node scripts/fleet/registry/npm/settings/trust.mts",
@@ -193,7 +193,6 @@
     "setup:0-mise": "node scripts/fleet/setup/mise.mts --bootstrap",
     "setup:1-token": "node scripts/fleet/setup/token.mts",
     "setup:1password": "node scripts/fleet/setup/one-password.mts",
-    "setup:2-security-tools": "node .claude/hooks/fleet/setup-security-tools/install.mts",
     "setup:3-hook-snapshot": "node scripts/fleet/setup/hook-snapshot.mts",
     "setup:4-repo-steps": "node scripts/fleet/setup/repo-steps.mts",
     "setup:ai-clients": "node scripts/fleet/setup/ai-clients.mts",
@@ -256,7 +255,15 @@
     "update:pnpm": "node scripts/fleet/update/pnpm.mts",
     "weekly-update": "node scripts/fleet/weekly-update.mts",
     "weekly-update:ci": "gh workflow run cron-weekly-update.yml",
-    "worktree:create": "node scripts/fleet/worktree/create/run.mts"
+    "worktree:create": "node scripts/fleet/worktree/create/run.mts",
+    "credentials:gh": "node scripts/fleet/credentials/gh/run.mts",
+    "credentials": "node scripts/fleet/credentials/run.mts",
+    "hooks:global:sync": "node scripts/fleet/sync-global-hooks.mts",
+    "hooks:repo:sync": "node scripts/repo/bootstrap/fleet.mjs",
+    "hooks:sync": "node scripts/fleet/hooks/sync.mts",
+    "git:admin:merge": "node scripts/fleet/git/admin/merge.mts",
+    "git:admin:push": "node scripts/fleet/git/admin/push.mts",
+    "git:history": "node scripts/fleet/git/history/cli.mts"
   },
   "dependencies": {
     "@socketsecurity/lib": "catalog:"
@@ -319,14 +326,14 @@
   "devEngines": {
     "packageManager": {
       "name": "pnpm",
-      "version": "^11.25.0 || >=12.3.4",
+      "version": ">=12.12.0",
       "onFail": "error"
     }
   },
   "engines": {
     "node": ">=24",
-    "npm": "^11.19.0 || >=12.0.2",
-    "pnpm": "^11.25.0 || >=12.3.4"
+    "npm": ">=12.2.0",
+    "pnpm": ">=12.12.0"
   },
   "allowScripts": {
     "cpu-features": false,

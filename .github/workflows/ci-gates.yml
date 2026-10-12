@@ -100,6 +100,8 @@ jobs:
           # SOCKET_PAYLOAD_CLIENT_ID var + SOCKET_PAYLOAD_APP_PRIVATE_KEY secret.
           payload-token-client-id: ${{ secrets.SOCKET_RELEASE_CLIENT_ID || vars.SOCKET_RELEASE_CLIENT_ID }}
           payload-token-private-key: ${{ secrets.SOCKET_RELEASE_APP_PRIVATE_KEY }}
+      - name: Build publishable emitters
+        run: pnpm run prepublish:check
       - name: Run checks
         uses: ./.github/actions/fleet/run-script
         with:
