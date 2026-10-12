@@ -15,7 +15,10 @@
   "files": [
     "CHANGELOG.md",
     "dist/**/*",
-    "emitters/**/*"
+    "emitters/socket-facts.init.gradle",
+    "emitters/socket-facts.plugin.scala",
+    "emitters/maven-extension/socket-facts-maven-extension.jar",
+    "emitters/dotnet-tool/publish/**/*"
   ],
   "sideEffects": false,
   "main": "./dist/index.js",
