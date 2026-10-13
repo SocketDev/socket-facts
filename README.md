@@ -125,6 +125,10 @@ pnpm run check
 pnpm test
 ```
 
+### Documentation
+
+See the [API reference](./docs/api.md) for public exports, fact fields, wire contracts, emitters, conformance tools, and links to hosted emitter details.
+
 Two emitters compile from source and are not part of `pnpm run build`, because
 a plain checkout cannot assume either toolchain. The Maven core extension needs
 a JDK; the dotnet tool needs a .NET 8+ SDK:
