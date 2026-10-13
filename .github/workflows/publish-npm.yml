@@ -45,7 +45,7 @@ on:
         type: string
         default: 'latest'
       release-as:
-        description: 'Release target: patch, minor, or an exact non-major X.Y.Z version.'
+        description: 'Release target: patch, minor, exact X.Y.Z, or exact X.Y.Z-beta.N / X.Y.Z-rc.N candidate.'
         type: string
         default: ''
       nightly-version:
@@ -726,6 +726,7 @@ jobs:
       - name: Publish
         id: publish
         env:
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID || vars.APPLE_TEAM_ID }}
           DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
           PUBLISH_TASK_NAME: ${{ inputs.task-name }}
           DIST_TAG: ${{ inputs.dist-tag }}
@@ -892,6 +893,7 @@ jobs:
       - name: Scan exact staged bytes
         id: scan
         env:
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID || vars.APPLE_TEAM_ID }}
           GITHUB_TOKEN: ${{ github.token }}
           SCAN_PACKAGE: ${{ inputs.scan-package }}
           SCAN_PUBLISH_RUN_ID: ${{ inputs.scan-publish-run-id }}
