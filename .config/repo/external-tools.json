@@ -3,25 +3,25 @@
   "description": "External tools required to build + release this repo. The canonical schema lives at socket-wheelhouse/scripts/fleet/build-infra/lib/external-tools-schema.json (generated from scripts/fleet/lib/external-tools-schema.mts); every fleet repo references it via the $schema field above so validators pick up the single source of truth. Extend the `tools` map with repo-specific entries (e.g. language toolchains for sdxgen, git credential helpers for packageurl-js).",
   "tools": {
     "cargo-hawk": {
-      "version": "0.1.14",
+      "version": "0.1.15",
       "repository": "github:astral-sh/hawk",
-      "tag": "0.1.14",
+      "tag": "0.1.15",
       "platforms": {
         "darwin-arm64": {
           "asset": "cargo-hawk-aarch64-apple-darwin.tar.gz",
-          "integrity": "sha512-+OdUQqLfbwMBzM6JANlWgx4V5ZgIuPWfpxYeYp41cmx3OBZONLY/t6ALM64Jo8KY1Rel6VRxP/hQDMqB8OKfqA=="
+          "integrity": "sha512-FUQitnX9Ltjzj6oe6psHOwhgrL9orfYijzXV5I2ysdrkJ5bzUY1HBK3o065EJ+x4YscAGrJXrj7Vy/AIZl55mg=="
         },
         "darwin-x64": {
           "asset": "cargo-hawk-x86_64-apple-darwin.tar.gz",
-          "integrity": "sha512-uWSuHRZBoyaY/WuWNvGRWB0Xis4zhT0n8om5jIcnmxnACUSk3odzOHdFVq+Mt4lAHOz2X36v0inwuQN2U6qtOQ=="
+          "integrity": "sha512-vgbSmOFjAREh/oPve3vYoMcs5+6IRqVJ7NzL3lM4R92bDBFZ3p4acsd/0eVEiibM6xxKUHmQOZoj54/RsRXVHQ=="
         },
         "linux-arm64": {
           "asset": "cargo-hawk-aarch64-unknown-linux-gnu.tar.gz",
-          "integrity": "sha512-qOYrKVQrxgBC+HTGI8oom6y4vG2vxO1Ly5cVjhWdha7BZBPeR64t2lOKRf3VrTxblQMsV2IBQZbVEP2wpXenbg=="
+          "integrity": "sha512-zCInC8n/zhsUhbqUngAglRjuW0mSdS+i8eez8mFvd1TIhJvKxfaq3tQRuai0nxQ4y29klPHYnHN1tPU5sVn/Ww=="
         },
         "linux-x64": {
           "asset": "cargo-hawk-x86_64-unknown-linux-gnu.tar.gz",
-          "integrity": "sha512-OZMhJEUFhdZ3CRT//xD2DAS9Jve5m90WcQoHa4oQS+y8f7Jn7OWSDmPGwzawj8iMBC4TvszzgLlvupbiG6UF3g=="
+          "integrity": "sha512-JkIVhbk7Pi2jVBpNpw6rPg5vaFHbRVG1+Z4AP+d+Mf6r7nmKjHs3nqWWD5ms3kCtSpasIr1IH19Fqt96S2GB/w=="
         }
       },
       "description": "cargo-hawk (Astral) — workspace-aware Cargo lint for unnecessary/over-broad Rust visibility. Rust fleet members only (consumed by setup:rust).",
